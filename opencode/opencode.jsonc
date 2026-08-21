@@ -205,8 +205,7 @@
         "simplify": {
             "description": "Simplify code without changing behavior — reduce nesting, remove unnecessary abstraction, cut dead variables",
             "agent": "oracle",
-            "template": "Load the simplify skill. Read the target file(s) and apply simplification patterns (early returns, inline single-use variables, remove single-caller functions, simplify conditionals). Produce a detailed report: for each simplification, provide the exact oldString to replace and newString to use. A writer agent will then apply these edits while you verify each change preserves behavior. Do not modify files yourself — output the simplification plan only."
-        },
-
+            "template": "Load the simplify skill. Read the target file(s) and apply simplification patterns (early returns, inline single-use variables, remove single-caller functions, simplify conditionals). Produce a detailed report: for each simplification, provide the exact oldString to replace and newString to use. The light-orchestrator agent will then apply these edits while you verify each change preserves behavior. Do not modify files yourself — output the simplification plan only."
+        }
     }
 }

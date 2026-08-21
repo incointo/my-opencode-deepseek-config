@@ -66,5 +66,6 @@ this file only covers this repository's local conventions.
 
 ## Before you finish
 1. Re-read every changed file end-to-end.
-2. Keep `README.md` in sync — agent, skills, and command tables, repo-structure tree, iteration log.
-3. Confirm no third model slipped in and no new dependency/plugin without justification.
+2. Run `node scripts/validate-jsonc.js` to validate JSONC syntax (strips comments + trailing commas, parses as JSON).
+3. Keep `README.md` in sync — agent, skills, and command tables, repo-structure tree, iteration log.
+4. Confirm no third model slipped in and no new dependency/plugin without justification.

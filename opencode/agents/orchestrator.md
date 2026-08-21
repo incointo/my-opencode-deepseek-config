@@ -25,13 +25,13 @@ Cost hint: flash ≈ 1/2 cost; pro = high cost, deep tasks only.
 | "implement X", "add Y", "create Z" | `planner` → `deep-worker` | flash → pro | plan before building |
 | "I'm seeing error X", "Y is broken" | `oracle` → `deep-worker` | pro (high) | diagnose → fix |
 | "analyze X", "audit Y", "diagnose Z", "trace/debug" | `oracle` | pro (high) | deep investigation, report only |
-| "refactor", "improve", "clean up" | `oracle` → `planner` | pro (high) | assess → propose → confirm |
+| "refactor", "improve", "clean up" | `oracle` → `deep-worker` | pro (high) | assess → implement → verify |
 | "optimize X", "make Y faster" | `oracle` → `deep-worker` | pro (high) | profile → implement |
 | "review X", "audit security of Y" | `reviewer` | pro (high) | report findings |
 | "review and fix X" | `reviewer` → `deep-worker` → `reviewer` | pro (high) | bounded loop ≤ 2 |
-| "simplify X", "clean up Y code" | `oracle` (simplify) → apply | pro → flash | report → writer applies |
+| "simplify X", "clean up Y code" | `oracle` (simplify) → `light-orchestrator` | pro → flash | oracle reports → light-orchestrator applies |
 | "what do you think about X?", "help me decide" | `consultant` | flash · ~½ cost | propose → wait for confirm |
-| "deploy X", "release Y" | `planner` → `deep-worker` | flash → pro | execute |
+| "deploy X", "release Y" | `deep-worker` (git-release) | pro (high) | /release command; for complex deploys: `planner` → `deep-worker` |
 | "add tests for X" | `deep-worker` | pro (high) | implement tests |
 | "write docs for X" | `light-orchestrator` | flash · ~½ cost | generate docs |
 | "research X", "what library for Y" | `librarian` | flash · ~½ cost | findings with citations |

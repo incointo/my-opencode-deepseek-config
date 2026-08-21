@@ -258,7 +258,7 @@ OpenCode 通过原生 `skill` 工具按需暴露技能——Agent 只在需要�
 
 ### 迭代里程碑
 
-自 v1 以来历经 30 次迭代，持续对标上游仓库最佳实践：
+自 v1 以来历经 33 次迭代，持续对标上游仓库最佳实践：
 
 - **v1-v7（奠基）**：双模型绑定、Agent 角色体系、意图门控路由、AGENTS.md 全局规则、Skills 目录、权限基线
 - **v8-v15（审查+规约+契约）**：code-review 双轴校准、spec-workflow、gh-cli 对齐、拒绝契约、后台核查
@@ -271,6 +271,7 @@ OpenCode 通过原生 `skill` 工具按需暴露技能——Agent 只在需要�
 - **v30（模型/技能瘦身）**：provider 层 thinking 拆分（flash 关 thinking + temperature 0，pro 默认）；删全部 variant/temperature frontmatter；删 mode:subagent（instructions 保留）；dcp showCompression 关 + 删 no-op；删 verification-planning、增 wayfinder/prototype（23→24 技能）；gh-cli 649→300、spec-workflow 233→120；code-review 增两轴；修正 lsp/formatter 默认值认识（保留 true）
 - **v31（多模态）**：新增 `deepseek-v4-flash-vision-exp` 多模态模型（provider 层沿用 flash 设置）；新增 `vision` agent 与 `/vision` 命令；orchestrator 路由表增多模态行；AGENTS.md 模型约束更新为三模型
 - **v32（会话复盘优化）**：基于三份真实会话日志（flash 配置/审查 + pro CAD）复盘。P0 子代理空结果降级（重试 1 次→停止告知用户，绝不内联硬扛重型实现）；P1 orchestrator 上下文卫生（不亲自探索/不加载领域 skill/子代理结果压缩转发/已验证事实传播/重审前核对覆盖）；P1 路由表补全（规模评估→explore、commit/push→/commit）；P2 opencode-config 技能修正（模型白名单引用 AGENTS.md、配置目录指针、read 工具防乱码、内置 validate-jsonc.js 校验器、新 agent 按角色分类）；P2 code-review 增全项目审查模式；P2 Git 安全禁目录级 `git add`
+- **v33（质量完善）**：修复 opencode.jsonc 尾随逗号；新增 .gitignore；增强 research 技能（18→78 行）；修正 orchestrator 路由表三处不一致（refactor 路由 oracle→deep-worker、simplify 路由明确 light-orchestrator、deploy/release 对齐 /release 命令）；spec-workflow 格式修补；opencode-config 技能增补 validate-jsonc.js 引用；simplify 命令模板明确 writer agent；新增 scripts/validate-jsonc.js 字符串感知校验器
 
 ## 仓库结构
 

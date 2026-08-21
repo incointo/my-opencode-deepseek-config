@@ -97,6 +97,7 @@ Before touching an existing (unarchived) change, ask in order:
 Each task must declare its verification method up front (build / test / manual
 command) — see AGENTS.md Self-Verification. Report CRITICAL (blocks archive) /
 WARNING (artifact drift) / SUGGESTION; WARNING and SUGGESTION do not block.
+
 ## Action: archive (delta merge)
 
 After verify passes (no CRITICAL), fold each delta spec into the source of
