@@ -67,8 +67,9 @@ zh-CN Windows system, Chinese; en-US, English. Never force English unless asked.
 
 ## Constraints (this repository)
 
-- **No new models.** Only `deepseek/deepseek-v4-pro` and
-  `deepseek/deepseek-v4-flash` may be used. Do not introduce others.
+- **No new models.** Only `deepseek/deepseek-v4-pro`,
+  `deepseek/deepseek-v4-flash`, and the multimodal
+  `deepseek/deepseek-v4-flash-vision-exp` may be used. Do not introduce others.
 - **No new dependencies** without explicit justification from the user.
 - **Pure-config philosophy.** Prefer prompt/config changes over new tooling.
 

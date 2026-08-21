@@ -2,14 +2,13 @@
 
 [简体中文](README.md) | **English**
 
-**OpenCode × DeepSeek Optimal Config** — a configuration scheme that pushes the DeepSeek V4 dual-model lineup (Pro + Flash) to its full potential within OpenCode's multi-agent framework. Core philosophy: **token efficiency first — the best development results at the lowest context cost**.
+**OpenCode × DeepSeek Optimal Config** — a configuration scheme that pushes the DeepSeek V4 model family (Pro + Flash + Flash-Vision) to its full potential within OpenCode's multi-agent framework. Core philosophy: **token efficiency first — the best development results at the lowest context cost**.
 
 ## Current Configuration Overview
 
 - Default primary agent: `orchestrator`
-- Primary model: `deepseek/deepseek-v4-pro`; lightweight model: `deepseek/deepseek-v4-flash`
+- Primary model: `deepseek/deepseek-v4-pro`; lightweight model: `deepseek/deepseek-v4-flash`; multimodal model: `deepseek/deepseek-v4-flash-vision-exp`
 - Agent nesting: `subagent_depth: 3` (supports 3 levels of subagent nesting)
-- Model isolation: single lock `enabled_providers: ["deepseek"]`
 - Session sharing: off (`share: "disabled"`); snapshots: on (`snapshot: true`)
 - Permission baseline: allow by default, destructive bash commands set to `ask`; sensitive `.env`-type files `deny`; external directories `ask`; read-only agents get a bash allowlist (deny all by default + allow read-only subcommands only)
 - Context compression: built-in compaction (opencode.jsonc) handles auto-triggering + pruning of stale tool output; DCP (dcp.jsonc) handles proactive dedup + compression thresholds — the two complement each other
@@ -49,12 +48,11 @@ Permanent setup: add `DEEPSEEK_API_KEY` to your system environment variables.
 ```jsonc
 {
   "model": "deepseek/deepseek-v4-pro",
-  "small_model": "deepseek/deepseek-v4-flash",
-  "enabled_providers": ["deepseek"]
+  "small_model": "deepseek/deepseek-v4-flash"
 }
 ```
 
-This config splits thinking at the `provider` layer: flash disables thinking and pins `temperature: 0` (fastest, cheapest), while pro keeps the default (thinking on). Example (flash):
+This config splits thinking at the `provider` layer: flash disables thinking and pins `temperature: 0` (fastest, cheapest), while pro keeps the default (thinking on). The multimodal `deepseek-v4-flash-vision-exp` is flash-tier and mirrors flash's settings. Example (flash):
 
 ```jsonc
 "provider": {
@@ -65,13 +63,19 @@ This config splits thinking at the `provider` layer: flash disables thinking and
           "temperature": 0,
           "thinking": { "type": "disabled" }
         }
+      },
+      "deepseek-v4-flash-vision-exp": {
+        "options": {
+          "temperature": 0,
+          "thinking": { "type": "disabled" }
+        }
       }
     }
   }
 }
 ```
 
-> **Model ID naming convention**: `provider_id/model_id` — i.e. `deepseek/deepseek-v4-pro` and `deepseek/deepseek-v4-flash`.
+> **Model ID naming convention**: `provider_id/model_id` — i.e. `deepseek/deepseek-v4-pro`, `deepseek/deepseek-v4-flash`, and `deepseek/deepseek-v4-flash-vision-exp`.
 
 ## Installation
 
@@ -123,21 +127,23 @@ ln -s /path/to/my-opencode-deepseek-config/opencode ~/.config/opencode
 
 Launch OpenCode and confirm:
 1. `/models` → the current model is `deepseek/deepseek-v4-pro`
-2. The agent list shows all 10 agents, including `orchestrator`, `planner`, and `deep-worker`
+2. The agent list shows all 11 agents, including `orchestrator`, `planner`, and `deep-worker`
 3. Send any request — the Orchestrator analyzes intent and routes automatically
 
 ## Model Division of Labor
 
-This repo strictly divides work between the two DeepSeek V4 models — no other models are introduced:
+This repo strictly divides work within the DeepSeek V4 model family — no other models are introduced:
 
 | Model | Purpose |
 | --- | --- |
 | `deepseek/deepseek-v4-pro` | Deep reasoning, root-cause analysis, code review, heavy multi-file implementation |
 | `deepseek/deepseek-v4-flash` | Orchestration/routing, planning, routine implementation, consultation, UI, exploration, external lookup, light edits, title/summary/compaction |
+| `deepseek/deepseek-v4-flash-vision-exp` | Multimodal: understanding and describing images, screenshots, charts, and UI mockups |
 
 ### Routing Strategy
 
 - **Flash first**: well-defined tasks — routing, search, planning, routine implementation, consultation, UI, exploration — go to flash agents first
+- **Vision owns multimodal**: when visual input (images, screenshots, charts) is detected, route to the `vision` agent (flash-vision model)
 - **Pro reserved for reasoning**: deep reasoning, root-cause analysis, code review, heavy multi-file implementation — pro only
 - **Automatic escalation**: when a flash agent can't handle a task, it escalates to pro automatically (with full context)
 
@@ -162,6 +168,7 @@ This repo strictly divides work between the two DeepSeek V4 models — no other 
 | `explore` | v4-flash | **read-only** | Codebase search, parallel exploration |
 | `librarian` | v4-flash | **read-only** | Documentation lookup, web search |
 | `light-orchestrator` | v4-flash | read-write | Lightweight tasks, single-file edits |
+| `vision` | v4-flash-vision-exp | read-write | Multimodal: images/screenshots/charts/UI mockups |
 
 > `deep-worker` and `light-orchestrator` follow a "no research, no delegation" principle — they execute, not explore; context is provided by the orchestrator.
 >
@@ -176,6 +183,7 @@ This repo strictly divides work between the two DeepSeek V4 models — no other 
 | `/deep` | `deep-worker` | Heavy implementation, multi-file changes |
 | `/quick` | `light-orchestrator` | Lightweight tasks, single-file edits |
 | `/ui` | `ui-builder` | Frontend/UI work |
+| `/vision` | `vision` | Multimodal: image/screenshot/chart understanding |
 | `/review` | `reviewer` (code-review) | Lightweight single-pass review + evidence gating |
 | `/review-pr` | `reviewer` (code-review + gh-cli) | Review a PR and post the result to GitHub |
 | `/plan` | `planner` | Create plans and technical proposals |
@@ -261,12 +269,13 @@ The core ideas draw on [oh-my-openagent](https://github.com/code-yeongyu/oh-my-o
 - **v28 (discipline refactor)**: cache + thinking discipline, scope-first + delegate-always, atomic TODOs pushed down to AGENTS.md; 5 new skills → 23 total; gh-cli adds 4 GHSA entries; code-review absorbs deepreview self-falsification; removed .ai/calibration.yml (rules inlined into code-review); README synced across two languages
 - **v29 (review slimming)**: code-review 275→152 single-pass; removed consensus/validator/calibration/SHA-ids/Points of Agreement; evidence-gated approval; fix loop now orchestrator-owned (no /review-loop); PR-posting knowledge merged into gh-cli; reviewer drops temperature + "enhanced" wording; security-review severity aligned
 - **v30 (model/skill slimming)**: provider-layer thinking split (flash disables thinking + temperature 0, pro default); removed all variant/temperature frontmatter; removed mode:subagent (instructions kept); dcp showCompression off + no-op removed; removed verification-planning, added wayfinder/prototype (23→24 skills); gh-cli 649→300, spec-workflow 233→120; code-review gains two axes; corrected lsp/formatter default understanding (kept true)
+- **v31 (multimodal)**: added the `deepseek-v4-flash-vision-exp` multimodal model (provider layer mirrors flash settings); added the `vision` agent and `/vision` command; orchestrator routing table gains a multimodal row; AGENTS.md model constraint updated to three models
 
 ## Repository Structure
 
 ```text
 ├── opencode/                     # OpenCode config directory (deployable independently)
-│   ├── agents/                   # 10 specialized Agents
+│   ├── agents/                   # 11 specialized Agents
 │   │   ├── orchestrator.md       # main entry: intent gate + model-aware routing
 │   │   ├── planner.md            # flash: architecture & planning
 │   │   ├── deep-worker.md        # pro: heavy implementation
@@ -276,7 +285,8 @@ The core ideas draw on [oh-my-openagent](https://github.com/code-yeongyu/oh-my-o
 │   │   ├── ui-builder.md         # flash: frontend & UI
 │   │   ├── explore.md            # flash: codebase search (read-only)
 │   │   ├── librarian.md          # flash: external retrieval (read-only)
-│   │   └── light-orchestrator.md # flash: simple editing
+│   │   ├── light-orchestrator.md # flash: simple editing
+│   │   └── vision.md             # flash-vision: multimodal understanding
 │   ├── skills/                   # 24 on-demand skills
 │   │   ├── code-review/          # lightweight single-pass review + evidence gating
 │   │   ├── codemap/              # generates repository structure map
@@ -302,7 +312,7 @@ The core ideas draw on [oh-my-openagent](https://github.com/code-yeongyu/oh-my-o
 │   │   ├── wait-what/            # restates hard-to-parse messages in one sentence for confirmation
 │   │   ├── wizard/               # human step-by-step wizard (bash -n verified)
 │   │   └── writing-for-agents/   # writing for agent-facing docs
-│   ├── opencode.jsonc            # main config (18 commands)
+│   ├── opencode.jsonc            # main config (19 commands)
 │   ├── AGENTS.md                 # global rules
 │   └── dcp.jsonc                 # DCP context compression (DeepSeek 128K, 60%/30% percentage thresholds)
 ├── README.md
@@ -335,6 +345,7 @@ Describe your needs in natural language; the Orchestrator analyzes intent and pi
 | Code review | `/review` |
 | External search / API lookup | `/search` |
 | Frontend / UI work | `/ui` |
+| Multimodal / image understanding | `/vision` |
 | Approach discussion / trade-offs | `/consult` |
 | Structured debugging | `/oracle` |
 
@@ -359,7 +370,7 @@ Describe your needs in natural language; the Orchestrator analyzes intent and pi
 ## Design Philosophy
 
 - **Pure config-driven, zero extra dependencies** — every capability comes from `opencode.jsonc` + `agents/*.md` + `skills/*/SKILL.md` + `AGENTS.md`
-- **Maximum use of the DeepSeek V4 dual models** — Pro for deep reasoning and heavy implementation, Flash for routing, planning, and routine execution
+- **Maximum use of the DeepSeek V4 model family** — Pro for deep reasoning and heavy implementation, Flash for routing, planning, and routine execution, Flash-Vision for multimodal tasks
 - **Token efficiency first** — path references instead of pasted files, skills loaded on demand, tiered compression management
 - **Plugins add value without stealing the spotlight** — superpowers provides process discipline, DCP (dcp.jsonc) handles proactive dedup + compression thresholds, built-in compaction (opencode.jsonc) handles auto-trigger + prune fallback
 - **Execution separated from exploration** — deep-worker/light-orchestrator must not research or delegate; explore/librarian must not modify

@@ -3,7 +3,6 @@
     "default_agent": "orchestrator",
     "model": "deepseek/deepseek-v4-pro",
     "small_model": "deepseek/deepseek-v4-flash",
-    "enabled_providers": ["deepseek"],
     "autoupdate": "notify",
     "share": "disabled",
     "lsp": true,
@@ -49,10 +48,18 @@
     ],
     // DeepSeek thinking split (deepseek-harness official): flash disables
     // thinking for cheapest+fastest runs; pro keeps the default (thinking on).
+    // The vision-exp model is a flash-tier multimodal variant — same cost
+    // profile, so it mirrors flash (thinking off, temperature 0).
     "provider": {
         "deepseek": {
             "models": {
                 "deepseek-v4-flash": {
+                    "options": {
+                        "temperature": 0,
+                        "thinking": { "type": "disabled" }
+                    }
+                },
+                "deepseek-v4-flash-vision-exp": {
                     "options": {
                         "temperature": 0,
                         "thinking": { "type": "disabled" }
@@ -115,6 +122,11 @@
             "description": "Route to ui-builder for frontend work",
             "agent": "ui-builder",
             "template": "Build or modify the UI as requested."
+        },
+        "vision": {
+            "description": "Route to vision for multimodal tasks (images, screenshots, diagrams)",
+            "agent": "vision",
+            "template": "Handle this multimodal task using the vision model."
         },
         "review": {
             "description": "Route to reviewer for code review",

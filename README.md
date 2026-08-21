@@ -2,14 +2,13 @@
 
 **简体中文** | [English](README.en-US.md)
 
-**OpenCode × DeepSeek 最优配置** —— 在 OpenCode 多 Agent 框架下，将 DeepSeek V4 双模型（Pro + Flash）的能力发挥到极致的配置方案。核心理念：**Token 效率优先，用最小的上下文成本达到最好的开发效果**。
+**OpenCode × DeepSeek 最优配置** —— 在 OpenCode 多 Agent 框架下，将 DeepSeek V4 模型族（Pro + Flash + Flash-Vision）的能力发挥到极致的配置方案。核心理念：**Token 效率优先，用最小的上下文成本达到最好的开发效果**。
 
 ## 当前配置概览
 
 - 默认主 Agent：`orchestrator`
-- 主模型：`deepseek/deepseek-v4-pro`，轻量模型：`deepseek/deepseek-v4-flash`
+- 主模型：`deepseek/deepseek-v4-pro`，轻量模型：`deepseek/deepseek-v4-flash`，多模态模型：`deepseek/deepseek-v4-flash-vision-exp`
 - 代理层级：`subagent_depth: 3`（支持 3 级代理嵌套）
-- 模型隔离：`enabled_providers: ["deepseek"]` 单锁
 - 会话分享：关闭（`share: "disabled"`）；快照：开启（`snapshot: true`）
 - 权限基线：默认放行，破坏性 bash 命令设为 `ask`；`.env` 类敏感文件 `deny`；外部目录 `ask`；只读 Agent 的 bash 白名单（默认 deny 全部 + 仅放行只读子命令）
 - 上下文压缩：内置 compaction（opencode.jsonc）管自动触发 + prune 裁旧工具输出，DCP（dcp.jsonc）管主动去重 + 压缩阈值，两者互补
@@ -49,12 +48,11 @@ opencode
 ```jsonc
 {
   "model": "deepseek/deepseek-v4-pro",
-  "small_model": "deepseek/deepseek-v4-flash",
-  "enabled_providers": ["deepseek"]
+  "small_model": "deepseek/deepseek-v4-flash"
 }
 ```
 
-本配置在 `provider` 层拆分 thinking：flash 关闭 thinking 并固定 `temperature: 0`（最快最省），pro 保持默认（thinking 开启）。示例（flash）：
+本配置在 `provider` 层拆分 thinking：flash 关闭 thinking 并固定 `temperature: 0`（最快最省），pro 保持默认（thinking 开启）。多模态 `deepseek-v4-flash-vision-exp` 同为 flash 档，沿用 flash 设置。示例（flash）：
 
 ```jsonc
 "provider": {
@@ -65,13 +63,19 @@ opencode
           "temperature": 0,
           "thinking": { "type": "disabled" }
         }
+      },
+      "deepseek-v4-flash-vision-exp": {
+        "options": {
+          "temperature": 0,
+          "thinking": { "type": "disabled" }
+        }
       }
     }
   }
 }
 ```
 
-> **模型 ID 命名规则**：`provider_id/model_id`，即 `deepseek/deepseek-v4-pro` 和 `deepseek/deepseek-v4-flash`。
+> **模型 ID 命名规则**：`provider_id/model_id`，即 `deepseek/deepseek-v4-pro`、`deepseek/deepseek-v4-flash` 和 `deepseek/deepseek-v4-flash-vision-exp`。
 
 ## 安装部署
 
@@ -123,21 +127,23 @@ ln -s /path/to/my-opencode-deepseek-config/opencode ~/.config/opencode
 
 启动 OpenCode 确认：
 1. `/models` → 当前模型为 `deepseek/deepseek-v4-pro`
-2. Agent 列表应能看到 `orchestrator`、`planner`、`deep-worker` 等 10 个 Agent
+2. Agent 列表应能看到 `orchestrator`、`planner`、`deep-worker` 等 11 个 Agent
 3. 输入任意请求，Orchestrator 自动分析意图并路由
 
 ## 模型分工
 
-本仓库严格限制在 DeepSeek V4 双模型内分工，不引入其他模型：
+本仓库严格限制在 DeepSeek V4 模型族内分工，不引入其他模型：
 
 | 模型 | 用途 |
 | --- | --- |
 | `deepseek/deepseek-v4-pro` | 深度推理、根因分析、代码审查、重型多文件实现 |
 | `deepseek/deepseek-v4-flash` | 编排/路由、规划、常规实现、咨询、UI、探索、外部检索、轻量编辑、标题/摘要/压缩 |
+| `deepseek/deepseek-v4-flash-vision-exp` | 多模态：图像/截图/图表/UI 稿的理解与描述 |
 
 ### 路由策略
 
 - **Flash 优先**：路由、搜索、规划、常规实现、咨询、UI、探索等明确定义的任务优先走 flash agent
+- **Vision 专责多模态**：检测到图像/截图/图表等视觉输入时，路由到 `vision` agent（flash-vision 模型）
 - **Pro 专注推理**：深度推理、根因分析、代码审查、重型多文件实现——只用 pro
 - **自动升级**：flash agent 无法胜任时自动升级到 pro（带完整上下文）
 
@@ -162,6 +168,7 @@ ln -s /path/to/my-opencode-deepseek-config/opencode ~/.config/opencode
 | `explore` | v4-flash | **只读** | 代码库搜索、并行探索 |
 | `librarian` | v4-flash | **只读** | 文档检索、Web 搜索 |
 | `light-orchestrator` | v4-flash | 读写 | 轻量任务、单文件编辑 |
+| `vision` | v4-flash-vision-exp | 读写 | 多模态：图像/截图/图表/UI 稿理解 |
 
 > `deep-worker` 和 `light-orchestrator` 遵循"禁止研究、禁止委托"原则——执行而非探索，上下文由 orchestrator 提供。
 >
@@ -176,6 +183,7 @@ ln -s /path/to/my-opencode-deepseek-config/opencode ~/.config/opencode
 | `/deep` | `deep-worker` | 重型实现、多文件改动 |
 | `/quick` | `light-orchestrator` | 轻量任务、单文件编辑 |
 | `/ui` | `ui-builder` | 前端/UI 工作 |
+| `/vision` | `vision` | 多模态：图像/截图/图表理解 |
 | `/review` | `reviewer`（code-review） | 轻量单遍审查 + 证据门控 |
 | `/review-pr` | `reviewer`（code-review + gh-cli） | 审查 PR 并回帖到 GitHub |
 | `/plan` | `planner` | 制定计划、技术方案 |
@@ -261,12 +269,13 @@ OpenCode 通过原生 `skill` 工具按需暴露技能——Agent 只在需要�
 - **v28（纪律重构）**：缓存+thinking 纪律、scope-first+委派优先、原子 TODO 下沉 AGENTS.md；新增 5 技能至 23 个；gh-cli 补 4 条 GHSA；code-review 融入 deepreview 自我证伪；删除 .ai/calibration.yml（规则内联进 code-review）；README 双语种同步
 - **v29（审查瘦身）**：code-review 275→152 单遍化；删除 consensus/validator/严重度校准/SHA-id/Points of Agreement；证据门控审批；修复循环改由 orchestrator 拥有（无 /review-loop）；PR 回帖知识并入 gh-cli；reviewer 去掉 temperature 与 "enhanced" 表述；security-review 严重度对齐
 - **v30（模型/技能瘦身）**：provider 层 thinking 拆分（flash 关 thinking + temperature 0，pro 默认）；删全部 variant/temperature frontmatter；删 mode:subagent（instructions 保留）；dcp showCompression 关 + 删 no-op；删 verification-planning、增 wayfinder/prototype（23→24 技能）；gh-cli 649→300、spec-workflow 233→120；code-review 增两轴；修正 lsp/formatter 默认值认识（保留 true）
+- **v31（多模态）**：新增 `deepseek-v4-flash-vision-exp` 多模态模型（provider 层沿用 flash 设置）；新增 `vision` agent 与 `/vision` 命令；orchestrator 路由表增多模态行；AGENTS.md 模型约束更新为三模型
 
 ## 仓库结构
 
 ```text
 ├── opencode/                     # OpenCode 配置目录（可独立部署）
-│   ├── agents/                   # 10 个专职 Agent
+│   ├── agents/                   # 11 个专职 Agent
 │   │   ├── orchestrator.md       # 主入口：意图门控 + 模型感知路由
 │   │   ├── planner.md            # flash：架构与规划
 │   │   ├── deep-worker.md        # pro：重型实现
@@ -276,7 +285,8 @@ OpenCode 通过原生 `skill` 工具按需暴露技能——Agent 只在需要�
 │   │   ├── ui-builder.md         # flash：前端与 UI
 │   │   ├── explore.md            # flash：代码库搜索（只读）
 │   │   ├── librarian.md          # flash：外部检索（只读）
-│   │   └── light-orchestrator.md # flash：简单编辑
+│   │   ├── light-orchestrator.md # flash：简单编辑
+│   │   └── vision.md             # flash-vision：多模态理解
 │   ├── skills/                   # 24 个按需加载技能
 │   │   ├── code-review/          # 轻量单遍审查 + 证据门控
 │   │   ├── codemap/              # 生成仓库结构图
@@ -302,7 +312,7 @@ OpenCode 通过原生 `skill` 工具按需暴露技能——Agent 只在需要�
 │   │   ├── wait-what/            # 难懂消息先一句话重述确认
 │   │   ├── wizard/               # 人工逐步向导（bash -n 验证）
 │   │   └── writing-for-agents/   # 面向 agent 的文档写作
-│   ├── opencode.jsonc            # 主配置（18 条命令）
+│   ├── opencode.jsonc            # 主配置（19 条命令）
 │   ├── AGENTS.md                 # 全局规则
 │   └── dcp.jsonc                 # DCP 上下文压缩（DeepSeek 128K，60%/30% 百分比阈值）
 ├── README.md
@@ -335,6 +345,7 @@ OpenCode 通过原生 `skill` 工具按需暴露技能——Agent 只在需要�
 | 代码审查 | `/review` |
 | 外部搜索 / 查 API | `/search` |
 | 前端 / UI 工作 | `/ui` |
+| 多模态 / 图像理解 | `/vision` |
 | 方案讨论 / 对比取舍 | `/consult` |
 | 结构化调试 | `/oracle` |
 
@@ -359,7 +370,7 @@ OpenCode 通过原生 `skill` 工具按需暴露技能——Agent 只在需要�
 ## 设计哲学
 
 - **纯配置驱动，零额外依赖** —— 所有能力由 `opencode.jsonc` + `agents/*.md` + `skills/*/SKILL.md` + `AGENTS.md` 实现
-- **DeepSeek V4 双模型极致利用** —— Pro 做深度推理与重型实现，Flash 做路由、规划与常规执行
+- **DeepSeek V4 模型族极致利用** —— Pro 做深度推理与重型实现，Flash 做路由、规划与常规执行，Flash-Vision 专责多模态
 - **Token 效率优先** —— 路径引用替代粘贴文件、技能按需加载、压缩分级管理
 - **插件增效但不喧宾夺主** —— superpowers 提供过程纪律，DCP（dcp.jsonc）主动去重+压缩阈值，内置 compaction（opencode.jsonc）自动触发+prune 兜底
 - **执行与探索分离** —— deep-worker/light-orchestrator 禁止研究/委托，explore/librarian 禁止修改
