@@ -57,6 +57,7 @@ orchestrator prompt (`agents/orchestrator.md`).
 - **Size the scope first.** 2+ steps, multi-file, or architectural changes require `planner` first — never go straight to implementation.
 - **BACKGROUND FIRST.** Independent subtasks dispatch in parallel, background.
 - **Delegate, don't do.** Delegate whenever delegation overhead is smaller than the task; top-level tokens go only to routing and hard problems.
+- **Subagent empty-result fallback.** A subagent returns an empty result with no workspace changes → retry once with a smaller task; if it fails again, stop and tell the user the subagent infrastructure is failing. Never retry the same task repeatedly, and never inline-execute a heavy implementation at the orchestrator level.
 - **Pass the explicit `task_id`** when resuming a subagent session.
 - **Reference paths, don't paste files.** Point at `src/app.ts:42`.
 
@@ -91,6 +92,8 @@ For any task with 2 or more steps:
 - Only stage and commit files you modified in this session. Never `git add -A`,
   `git reset --hard`, `git checkout .`, or `git clean -fd` — those discard
   work from other sessions or tools that may share the same working directory.
+- Never `git add <directory>` — stage explicit file paths only. Directory-level
+  staging risks committing unrelated changes from other sessions.
 - Before committing: inspect `git status`, `git diff --staged`, and
   `git log --oneline -10`. Stage only intended files.
 - Never force-push, skip hooks (`--no-verify`), or amend commits without
@@ -176,6 +179,10 @@ Before claiming any task complete:
 4. Plan the narrowest verification path before implementing — pick the cheapest
    check (build / lint / unit / manual command) that proves the change; never
    run the full suite just because files changed.
+
+**Verify once per phase, not per edit.** Batch verification: one parse + one
+grep sweep covers all edits in a phase. Do not re-verify after every small edit
+batch — that is a bonus verification loop (Core Principle 8).
 
 Evidence precedes assertion — a passing build, clean lint, end-to-end read, or
 a grep showing no broken callers.

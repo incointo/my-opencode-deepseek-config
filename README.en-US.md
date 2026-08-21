@@ -258,7 +258,7 @@ The core ideas draw on [oh-my-openagent](https://github.com/code-yeongyu/oh-my-o
 
 ### Iteration Milestones
 
-29 iterations since v1, continuously benchmarking best practices from upstream repositories:
+30 iterations since v1, continuously benchmarking best practices from upstream repositories:
 
 - **v1-v7 (foundation)**: dual-model binding, agent role system, intent-gate routing, AGENTS.md global rules, skills directory, permission baseline
 - **v8-v15 (review + specs + contract)**: code-review two-axis calibration, spec-workflow, gh-cli alignment, rejection contract, background verification
@@ -270,6 +270,7 @@ The core ideas draw on [oh-my-openagent](https://github.com/code-yeongyu/oh-my-o
 - **v29 (review slimming)**: code-review 275→152 single-pass; removed consensus/validator/calibration/SHA-ids/Points of Agreement; evidence-gated approval; fix loop now orchestrator-owned (no /review-loop); PR-posting knowledge merged into gh-cli; reviewer drops temperature + "enhanced" wording; security-review severity aligned
 - **v30 (model/skill slimming)**: provider-layer thinking split (flash disables thinking + temperature 0, pro default); removed all variant/temperature frontmatter; removed mode:subagent (instructions kept); dcp showCompression off + no-op removed; removed verification-planning, added wayfinder/prototype (23→24 skills); gh-cli 649→300, spec-workflow 233→120; code-review gains two axes; corrected lsp/formatter default understanding (kept true)
 - **v31 (multimodal)**: added the `deepseek-v4-flash-vision-exp` multimodal model (provider layer mirrors flash settings); added the `vision` agent and `/vision` command; orchestrator routing table gains a multimodal row; AGENTS.md model constraint updated to three models
+- **v32 (session-review optimization)**: reviewed three real session logs (flash config/review + pro CAD). P0 subagent empty-result fallback (retry once → stop and tell the user, never inline heavy implementation); P1 orchestrator context hygiene (no self-exploration / no self-loading domain skills / summarize subagent results before forwarding / propagate verified facts / check coverage before re-review); P1 routing table completion (scoping→explore, commit/push→/commit); P2 opencode-config skill fixes (model allowlist references AGENTS.md, config-dir pointer, read-tool mojibake note, bundled validate-jsonc.js, classify new agents by role); P2 code-review gains full-project audit mode; P2 Git safety bans directory-level `git add`
 
 ## Repository Structure
 
