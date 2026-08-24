@@ -39,8 +39,8 @@
   ],
 
   // ══════════════════════════════════════════════════════════════
-  // Compression strategy — tuned for DeepSeek V4 (128K context)
-  // Core principle: proactive compression > passive overflow; DCP compresses proactively at the 60% threshold, native auto compaction is the near-overflow fallback — the two complement each other
+  // Compression strategy — tuned for DeepSeek V4 (1M context window)
+  // Core principle: proactive compression > passive overflow; DCP compresses proactively at the 77K threshold, native auto compaction is the near-overflow fallback — the two complement each other
   // 分工：内置 compaction 管自动触发 + prune（opencode.jsonc）；DCP 管主动去重 + 压缩阈值。两者互补。
   // ══════════════════════════════════════════════════════════════
   "compress": {
@@ -51,11 +51,12 @@
     // 摘要缓冲：压缩摘要 token 不计入 maxContextLimit，充分利用窗口
     "summaryBuffer": true,
 
-    // 上下文阈值（DeepSeek V4 128K 窗口调优）：
-    // 60% ≈ 原 75K/128K 的百分比等值，随模型窗口自适应
-    "maxContextLimit": "60%",
-    // 30% ≈ 原 35K/128K 的百分比等值，随模型窗口自适应
-    "minContextLimit": "30%",
+    // 上下文阈值（绝对 token 值，不用百分比）：
+    // DeepSeek V4 实际是 1M 上下文窗口（非 128K），若用百分比则 60%≈600K、
+    // 30%≈300K，普通会话（20K-200K）永远达不到，DCP 永不触发压缩。
+    // 改用绝对 token 值，恢复预期的 ~77K/38K 主动压缩，与模型窗口解耦。
+    "maxContextLimit": 77000,
+    "minContextLimit": 38000,
 
     // 每 3 次 LLM 请求提醒一次压缩（比默认 5 更频繁，适配 token 效率目标）
     "nudgeFrequency": 3,
