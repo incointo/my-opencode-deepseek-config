@@ -198,6 +198,9 @@ OpenAPI preview; `--allow-escape-sequences` preserves raw escapes. There is
 - Rely on response headers `x-ratelimit-remaining` / `x-ratelimit-reset`, not
   polling `/rate_limit` — cheaper and always accurate.
 - On `429`/`403`, read `retry-after` and back off; don't retry blindly.
+- Secondary limits: match `\bsecondary rate\b` in the response body — `retry-after`
+  and `gh-limited-by` headers are often absent (github.com obfuscation). Wait
+  ≥60s, then exponential backoff.
 
 ## Agent Skills (`gh skill`) — v2.94.0+
 

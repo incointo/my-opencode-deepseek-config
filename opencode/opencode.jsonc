@@ -52,6 +52,9 @@
     // profile, so it mirrors flash (thinking off, temperature 0). The
     // modalities block declares image input support; without it OpenCode
     // treats the model as text-only and rejects read_image calls.
+    // `options.thinking` is a provider passthrough, not a native schema field:
+    // OpenCode forwards it verbatim to the DeepSeek API (OpenAI-format thinking
+    // toggle — {"type":"enabled"|"disabled"}).
     "provider": {
         "deepseek": {
             "models": {

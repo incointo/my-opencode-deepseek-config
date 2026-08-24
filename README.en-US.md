@@ -9,7 +9,7 @@
 - Default primary agent: `orchestrator`
 - Primary model: `deepseek/deepseek-v4-pro`; lightweight model: `deepseek/deepseek-v4-flash`; multimodal model: `deepseek/deepseek-v4-flash-vision-exp`
 - Agent nesting: `subagent_depth: 3` (supports 3 levels of subagent nesting)
-- Session sharing: off (`share: "disabled"`); snapshots: on (`snapshot: true`)
+- Session sharing: off (`share: "disabled"`)
 - Permission baseline: allow by default, destructive bash commands set to `ask`; sensitive `.env`-type files `deny`; external directories `ask`; read-only agents get a bash allowlist (deny all by default + allow read-only subcommands only)
 - Context compression: built-in compaction (opencode.jsonc) handles auto-triggering + pruning of stale tool output; DCP (dcp.jsonc) handles proactive dedup + compression thresholds — the two complement each other
 - Global rules: `AGENTS.md` (core principles, task rejection contract, self-verification, anti-patterns, etc.; context/token discipline in `AGENTS.md`)
@@ -254,7 +254,7 @@ The core ideas draw on [oh-my-openagent](https://github.com/code-yeongyu/oh-my-o
 >
 > **This round (v28) — mechanism sources**: DeepSeek cache + thinking discipline, scope-first + delegate-always, atomic TODOs pushed down into AGENTS.md; 5 new skills (wait-what/writing-for-agents/to-questionnaire/research/wizard) bringing the total to 23; gh-cli gains 4 GHSA security entries; removed .ai/calibration.yml (calibration rules inlined into code-review).
 >
-> **Evaluated and rejected**: the remaining process skills from mattpocock/skills (code-review, tdd, implement, etc. — they overlap with superpowers/existing skills); superpowers has no config knobs, so it remains injected as a plugin string.
+> **Evaluated and rejected**: mattpocock's issue-tracker workflow (to-spec/to-tickets/triage/implement) is too heavy; omo's category-based routing and model-family-specific prompts are over-engineering for a 3-model pure-config setup; diagnosing-bugs overlaps superpowers' systematic-debugging; superpowers has no config knobs, so it remains injected as a plugin string.
 
 ### Iteration Milestones
 
@@ -272,6 +272,7 @@ The core ideas draw on [oh-my-openagent](https://github.com/code-yeongyu/oh-my-o
 - **v31 (multimodal)**: added the `deepseek-v4-flash-vision-exp` multimodal model (provider layer mirrors flash settings); added the `vision` agent and `/vision` command; orchestrator routing table gains a multimodal row; AGENTS.md model constraint updated to three models
 - **v32 (session-review optimization)**: reviewed three real session logs (flash config/review + pro CAD). P0 subagent empty-result fallback (retry once → stop and tell the user, never inline heavy implementation); P1 orchestrator context hygiene (no self-exploration / no self-loading domain skills / summarize subagent results before forwarding / propagate verified facts / check coverage before re-review); P1 routing table completion (scoping→explore, commit/push→/commit); P2 opencode-config skill fixes (model allowlist references AGENTS.md, config-dir pointer, read-tool mojibake note, bundled validate-jsonc.js, classify new agents by role); P2 code-review gains full-project audit mode; P2 Git safety bans directory-level `git add`
 - **v33 (quality hardening)**: fixed opencode.jsonc trailing comma; added .gitignore; enhanced research skill (18→78 lines); fixed three orchestrator routing table inconsistencies (refactor → oracle→deep-worker, simplify → oracle→light-orchestrator, deploy/release aligned with /release command); spec-workflow formatting fix; opencode-config skill now references validate-jsonc.js; simplify command template clarifies writer agent; added scripts/validate-jsonc.js with string-aware comment stripping
+- **v34 (targeted slimming + high-value borrows)**: handoff gains pi's structured headings (Goal / Constraints & Preferences / Progress / Key Decisions / Next Steps / Critical Context); shared-language gains "glossary and nothing else" + ADR triage (mattpocock); gh-cli gains secondary rate-limit detection; opencode.jsonc thinking comment corrected to provider passthrough; README fixed the stale snapshot claim (command count verified correct at 19); confirmed two-axis review / delta specs / cache discipline already implemented — no new skills added
 
 ## Repository Structure
 

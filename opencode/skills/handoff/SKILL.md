@@ -14,11 +14,29 @@ the session. Reference existing artifacts — never paste their content.
 - Task mentions "handoff", "交接", "continue later", "next session"
 - Context is too large and you need to preserve current state
 
+## Structured format
+
+Every handoff uses these exact headings, in this order:
+
+```
+## Goal
+## Constraints & Preferences
+## Progress (Done / In Progress / Blocked)
+## Key Decisions
+## Next Steps
+## Critical Context
+```
+
+Fill each with short bullets, not prose. Leave a section empty (with a single
+`—`) rather than padding it.
+
 ## What to include
 
-- **Summary**: goal, progress so far, current branch/open files/last action
-- **Blockers**: what's preventing progress, what still needs an answer
-- **Decisions**: trade-offs made, alternatives rejected, and why
+- **Goal**: the end state this session was driving toward
+- **Progress**: what's done / in progress / blocked — paths to artifacts, not content
+- **Key Decisions**: trade-offs made, alternatives rejected, and why
+- **Next Steps**: the concrete first actions for the next session
+- **Critical Context**: gotchas, constraints, or facts the next agent must know
 - **Artifact references**: paths/URLs to specs, plans, diffs, issues — never inline
 
 ## What NOT to include
@@ -40,9 +58,8 @@ Save to the OS temp directory:
 ## Agent workflow
 
 1. Collect paths of existing artifacts (specs, plans, PRs, diffs)
-2. Summarize remaining state: goal, progress, blockers, open questions
-3. Note key decisions and rejected alternatives
-4. Add a **Suggested Skills** section listing skills the next session should load
-5. Write to the OS temp directory, report the path to the user
+2. Fill the structured headings with short bullets: goal, progress, decisions, next steps, critical context
+3. Add a **Suggested Skills** section listing skills the next session should load
+4. Write to the OS temp directory, report the path to the user
 
 The handoff is a signpost, not a replay. Keep it under 100 lines.

@@ -9,7 +9,7 @@
 - 默认主 Agent：`orchestrator`
 - 主模型：`deepseek/deepseek-v4-pro`，轻量模型：`deepseek/deepseek-v4-flash`，多模态模型：`deepseek/deepseek-v4-flash-vision-exp`
 - 代理层级：`subagent_depth: 3`（支持 3 级代理嵌套）
-- 会话分享：关闭（`share: "disabled"`）；快照：开启（`snapshot: true`）
+- 会话分享：关闭（`share: "disabled"`）
 - 权限基线：默认放行，破坏性 bash 命令设为 `ask`；`.env` 类敏感文件 `deny`；外部目录 `ask`；只读 Agent 的 bash 白名单（默认 deny 全部 + 仅放行只读子命令）
 - 上下文压缩：内置 compaction（opencode.jsonc）管自动触发 + prune 裁旧工具输出，DCP（dcp.jsonc）管主动去重 + 压缩阈值，两者互补
 - 全局规则：`AGENTS.md`（核心原则、任务拒绝契约、自我验证、反模式等；上下文/Token 纪律在 `AGENTS.md`）
@@ -254,7 +254,7 @@ OpenCode 通过原生 `skill` 工具按需暴露技能——Agent 只在需要�
 >
 > **本轮（v28）机制来源**：DeepSeek 缓存+thinking 纪律、scope-first+委派优先、原子 TODO 下沉进 AGENTS.md；新增 5 技能（wait-what/writing-for-agents/to-questionnaire/research/wizard）至 23 个；gh-cli 增补 4 条 GHSA 安全条目；删除 .ai/calibration.yml（校准规则内联进 code-review）。
 >
-> **评估后未采用**：mattpocock/skills 的其余流程类技能（code-review、tdd、implement 等与 superpowers/现有技能重叠）；superpowers 无配置旋钮，保持插件字符串形式注入。
+> **评估后未采用**：mattpocock 的 issue-tracker 工作流（to-spec/to-tickets/triage/implement）过重；omo 的分类路由与按模型族定制提示词，对 3 模型纯配置而言过度设计；diagnosing-bugs 与 superpowers 的 systematic-debugging 重叠，未新增；superpowers 无配置旋钮，保持插件字符串形式注入。
 
 ### 迭代里程碑
 
@@ -272,6 +272,7 @@ OpenCode 通过原生 `skill` 工具按需暴露技能——Agent 只在需要�
 - **v31（多模态）**：新增 `deepseek-v4-flash-vision-exp` 多模态模型（provider 层沿用 flash 设置）；新增 `vision` agent 与 `/vision` 命令；orchestrator 路由表增多模态行；AGENTS.md 模型约束更新为三模型
 - **v32（会话复盘优化）**：基于三份真实会话日志（flash 配置/审查 + pro CAD）复盘。P0 子代理空结果降级（重试 1 次→停止告知用户，绝不内联硬扛重型实现）；P1 orchestrator 上下文卫生（不亲自探索/不加载领域 skill/子代理结果压缩转发/已验证事实传播/重审前核对覆盖）；P1 路由表补全（规模评估→explore、commit/push→/commit）；P2 opencode-config 技能修正（模型白名单引用 AGENTS.md、配置目录指针、read 工具防乱码、内置 validate-jsonc.js 校验器、新 agent 按角色分类）；P2 code-review 增全项目审查模式；P2 Git 安全禁目录级 `git add`
 - **v33（质量完善）**：修复 opencode.jsonc 尾随逗号；新增 .gitignore；增强 research 技能（18→78 行）；修正 orchestrator 路由表三处不一致（refactor 路由 oracle→deep-worker、simplify 路由明确 light-orchestrator、deploy/release 对齐 /release 命令）；spec-workflow 格式修补；opencode-config 技能增补 validate-jsonc.js 引用；simplify 命令模板明确 writer agent；新增 scripts/validate-jsonc.js 字符串感知校验器
+- **v34（定向瘦身 + 高价值借鉴）**：handoff 增 pi 结构化标题（Goal / Constraints & Preferences / Progress / Key Decisions / Next Steps / Critical Context）；shared-language 增"术语表即一切"与 ADR 分流规则（mattpocock）；gh-cli 增次级限流检测；opencode.jsonc thinking 注释修正为 provider 透传说明；README 修正快照（snapshot）过期声明、命令数核实为 19 条无误；核实两轴审查/delta specs/缓存纪律等上游理念已落地，未新增技能
 
 ## 仓库结构
 
