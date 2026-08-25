@@ -261,15 +261,11 @@ OpenCode 通过原生 `skill` 工具按需暴露技能——Agent 只在需要�
 
 自 v1 以来历经 34 次迭代，持续对标上游仓库最佳实践：
 
-- **v1-v7（奠基）**：双模型绑定、Agent 角色体系、意图门控路由、AGENTS.md 全局规则、Skills 目录、权限基线
-- **v8-v15（审查+规约+契约）**：code-review 双轴校准、spec-workflow、gh-cli 对齐、拒绝契约、后台核查
-- **v16-v22（持续瘦身）**：命令 29→18（-38%）、AGENTS.md 290→211（-27%）、逐句 no-op 修剪、Schema 校验去死键
-- **v23-v25（对齐+安全）**：整合 6 个上游仓库、gh-cli v2.97 转义注入安全章节、procedure-driven 提示精化、DCP 窗口调优
-- **v26（本轮瘦身）**：prune:true 与 tool_output 800/20480 收紧、DCP 切换 60%/30% 百分比阈值、grilling 引入替代 writing-great-skills、opencode-config 131→64 精简、code-review 分级+validator、gh-cli 补 gh status、AGENTS.md 增 User Override、orchestrator 委托成本纪律、7 个 agent 文件净减 22 行
-- **v27（删除/迁移/新增）**：删 batch_tool 死配置、只读 agent 无效 `write: deny`、bash 3 条冗余；Context Management 段迁入 orchestrator 专属小节；只读 agent bash 白名单、read 补 `.env`；新增 tech-debt-audit 技能；15 条技能 description 瘦身 30-40%；gh-cli 补 rate limit/gh skill 宿主/gh-aw 等 5 点、code-review 增 Points of Agreement、spec-workflow 补 update 两问、orchestrator 增独立会话收集+提示词缓存安全、deep-worker 增 impact×confidence÷cost
-- **v28（纪律重构）**：缓存+thinking 纪律、scope-first+委派优先、原子 TODO 下沉 AGENTS.md；新增 5 技能至 23 个；gh-cli 补 4 条 GHSA；code-review 融入 deepreview 自我证伪；删除 .ai/calibration.yml（规则内联进 code-review）；README 双语种同步
-- **v29（审查瘦身）**：code-review 275→152 单遍化；删除 consensus/validator/严重度校准/SHA-id/Points of Agreement；证据门控审批；修复循环改由 orchestrator 拥有（无 /review-loop）；PR 回帖知识并入 gh-cli；reviewer 去掉 temperature 与 "enhanced" 表述；security-review 严重度对齐
-- **v30（模型/技能瘦身）**：provider 层 thinking 拆分（flash 关 thinking + temperature 0，pro 默认）；删全部 variant/temperature frontmatter；删 mode:subagent（instructions 保留）；dcp showCompression 关 + 删 no-op；删 verification-planning、增 wayfinder/prototype（23→24 技能）；gh-cli 649→300、spec-workflow 233→120；code-review 增两轴；修正 lsp/formatter 默认值认识（保留 true）
+> **展示规则**：仅保留最新 5 个版本（v31-v35）的独立更新说明；更早版本按每 10 个版本合并为一条描述（v1-v10、v11-v20、v21-v30）。每次新增版本时，将最旧的独立版本并入其对应的 10 版本区间，保持此结构。
+
+- **v1-v10（奠基 + 审查/规约/契约）**：双模型绑定、Agent 角色体系、意图门控路由、AGENTS.md 全局规则、Skills 目录、权限基线；code-review 双轴校准、spec-workflow、gh-cli 对齐、拒绝契约、后台核查
+- **v11-v20（持续瘦身）**：命令 29→18（-38%）、AGENTS.md 290→211（-27%）、逐句 no-op 修剪、Schema 校验去死键
+- **v21-v30（对齐 + 安全 + 纪律重构）**：整合 6 个上游仓库、gh-cli v2.97 转义注入安全章节、DCP 窗口调优；prune/DCP 百分比阈值收紧、grilling 引入、code-review 单遍化 + 证据门控、provider 层 thinking 拆分、缓存纪律、scope-first + 委派优先、原子 TODO、5 新技能至 24 个、README 双语同步
 - **v31（多模态）**：新增 `deepseek-v4-flash-vision-exp` 多模态模型（provider 层沿用 flash 设置）；新增 `vision` agent 与 `/vision` 命令；orchestrator 路由表增多模态行；AGENTS.md 模型约束更新为三模型
 - **v32（会话复盘优化）**：基于三份真实会话日志（flash 配置/审查 + pro CAD）复盘。P0 子代理空结果降级（重试 1 次→停止告知用户，绝不内联硬扛重型实现）；P1 orchestrator 上下文卫生（不亲自探索/不加载领域 skill/子代理结果压缩转发/已验证事实传播/重审前核对覆盖）；P1 路由表补全（规模评估→explore、commit/push→/commit）；P2 opencode-config 技能修正（模型白名单引用 AGENTS.md、配置目录指针、read 工具防乱码、内置 validate-jsonc.js 校验器、新 agent 按角色分类）；P2 code-review 增全项目审查模式；P2 Git 安全禁目录级 `git add`
 - **v33（质量完善）**：修复 opencode.jsonc 尾随逗号；新增 .gitignore；增强 research 技能（18→78 行）；修正 orchestrator 路由表三处不一致（refactor 路由 oracle→deep-worker、simplify 路由明确 light-orchestrator、deploy/release 对齐 /release 命令）；spec-workflow 格式修补；opencode-config 技能增补 validate-jsonc.js 引用；simplify 命令模板明确 writer agent；新增 scripts/validate-jsonc.js 字符串感知校验器
