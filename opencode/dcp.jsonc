@@ -75,7 +75,7 @@
 
     // <protect> 标签（关闭，我们暂无此使用模式）
     "protectTags": false,
-    // 允许 DCP 压缩用户消息（如大型日志粘贴），关键于 DeepSeek 128K 窗口效率。
+    // 允许 DCP 压缩用户消息（如大型日志粘贴），关键于 DeepSeek V4 1M 窗口效率。
     // 设为 true 时会永久保留所有用户消息——20K+ 日志粘贴将不可压缩。
     "protectUserMessages": false
   },

@@ -82,6 +82,10 @@
             "repository": "anomalyco/opencode",
             "branch": "dev",
             "description": "Official opencode docs, schema, and configuration examples"
+        },
+        "deepseek-harness": {
+            "repository": "deepseek-ai/deepseek-harness",
+            "description": "Official DeepSeek model config guidance: thinking toggle, temperature, prompt-caching, context-window handling, OpenAI-compatible API setup"
         }
     },
     // Built-in utility agents (no .md file). Flash-first policy: build/plan/
@@ -200,6 +204,11 @@
             "description": "Generate a structured hierarchical map of the codebase for quick orientation",
             "agent": "explore",
             "template": "Load the codemap skill and generate an annotated directory tree for this project. Build the raw tree (depth 3, excluding node_modules/.git/dist/build/.next/coverage), annotate key directories with one-line purpose descriptions, and add quick-reference metadata (language, framework, runtime, build/test commands). Keep the whole map under 200 lines. If .opencode/codemap.md exists and appears fresh, update it rather than overwriting."
+        },
+        "learn": {
+            "description": "Extract non-obvious learnings from this session into directory-level AGENTS.md files",
+            "agent": "light-orchestrator",
+            "template": "Analyze this session and extract non-obvious learnings to add to AGENTS.md files. AGENTS.md files can exist at any directory level, not just the project root — when an agent reads a file, any AGENTS.md in parent directories are auto-loaded into the tool read. Place learnings as close to the relevant code as possible: project-wide → root AGENTS.md; package/module-specific → packages/foo/AGENTS.md; feature-specific → src/auth/AGENTS.md. Include only non-obvious discoveries: hidden relationships, execution paths that differ from how code appears, non-obvious config/env/flags, debugging breakthroughs, API/tool quirks, build/test commands not in README, architectural decisions, files that must change together. Exclude obvious facts, standard framework behavior, things already in an AGENTS.md, verbose explanations, session-specific details. Keep entries to 1-3 lines per insight. After updating, summarize which AGENTS.md files were created/updated and how many learnings per file."
         },
         "spec-apply": {
             "description": "Implement a spec-driven change task-by-task, verify, then auto-archive on completion",

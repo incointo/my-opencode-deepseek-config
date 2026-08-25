@@ -16,7 +16,7 @@ this file only covers this repository's local conventions.
 | `skills/<name>/SKILL.md` | On-demand skills, auto-discovered from the config dir |
 
 ## Hard constraints
-- Only `deepseek/deepseek-v4-pro` and `deepseek/deepseek-v4-flash`. Never a third model.
+- Only `deepseek/deepseek-v4-pro`, `deepseek/deepseek-v4-flash`, and the multimodal `deepseek/deepseek-v4-flash-vision-exp`. Never a fourth model; vision-exp is for visual input only, never a default.
 - Use the singular sst keys (`plugin`, `snapshot`), not the fork's plural (`plugins`, `snapshots`).
 
 ## Config key shapes (authoritative)
@@ -32,7 +32,7 @@ this file only covers this repository's local conventions.
 | `name` | kebab-case, matches filename |
 | `description` | When to use this agent (drives routing + @-menu) |
 | `mode` | `primary` \| `subagent` |
-| `model` | `deepseek/deepseek-v4-pro` \| `deepseek/deepseek-v4-flash` |
+| `model` | `deepseek/deepseek-v4-pro` \| `deepseek/deepseek-v4-flash` \| `deepseek/deepseek-v4-flash-vision-exp` (visual only) |
 | `steps` | step budget; heavier agents get more |
 | `color` | "#RRGGBB" |
 | `hidden` | optional: hide from @-menu |

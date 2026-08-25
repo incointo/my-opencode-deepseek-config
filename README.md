@@ -205,6 +205,7 @@ ln -s /path/to/my-opencode-deepseek-config/opencode ~/.config/opencode
 | 命令 | Agent | 用途 |
 | --- | --- | --- |
 | `/codemap` | `explore`（codemap） | 生成仓库结构图 |
+| `/learn` | `light-orchestrator` | 把会话中的非显然经验沉淀到目录级 AGENTS.md（根/包/特性级） |
 | `/simplify` | `oracle`（simplify）→ `light-orchestrator` | oracle 分析 → light-orchestrator 应用简化 |
 | `/rmslop` | `deep-worker`（remove-deadcode） | 清理死代码和 AI slop |
 
@@ -223,7 +224,7 @@ OpenCode 通过原生 `skill` 工具按需暴露技能——Agent 只在需要�
 | --- | --- |
 | `code-review` | 单遍代码审查 + 证据门控；大 diff（>~500 行）拆 Standards/Spec 两轴合并报告 |
 | `codemap` | 生成带标注的仓库结构图，快速定向，节省探索 token |
-| `gh-cli` | GitHub CLI v2.97+ 参考：PR 回帖、api、rate limit、gh pr checks、gh skill/gh-aw、GHSA 安全要点 |
+| `gh-cli` | GitHub CLI v2.98+ 参考：PR 回帖、api、rate limit、gh pr checks、gh skill/gh-aw、GHSA 安全要点 |
 | `git-master` | 高级 Git 操作：rebase、squash、fixup、bisect、reflog、代码考古、worktree |
 | `git-release` | Tag 发布：发布说明、SemVer 推断、gh release 命令 |
 | `resolving-merge-conflicts` | 逐 hunk 解析合并冲突：追溯原始意图、永不发明新行为、永不 --abort |
@@ -248,17 +249,17 @@ OpenCode 通过原生 `skill` 工具按需暴露技能——Agent 只在需要�
 
 ## 设计决策与迭代记录
 
-核心思路借鉴了 [oh-my-openagent](https://github.com/code-yeongyu/oh-my-openagent)（意图门控、只读隔离、反模式）、[oh-my-opencode-slim](https://github.com/alvinunreal/oh-my-opencode-slim)（调度器优先、后备链、拒绝契约、提示词缓存安全、impact×confidence÷cost）、[anomalyco/opencode](https://github.com/anomalyco/opencode)（配置 Schema、技能体系）、[cli/cli](https://github.com/cli/cli)（gh v2.97 命令集、rate limit、gh-aw）、[OpenSpec](https://github.com/Fission-AI/OpenSpec)（delta specs、OPSX 动作流 update/verify/四问）、[mattpocock/skills](https://github.com/mattpocock/skills)（冲突解析纪律、交接文档）、[pi](https://github.com/earendil-works/pi)（先答后改、精简响应、独立会话收集）和 [deepreview](https://github.com/mechanai/deepreview)（有效大小路由）的优点，纯配置实现，零额外依赖。
+核心思路借鉴了 [oh-my-openagent](https://github.com/code-yeongyu/oh-my-openagent)（意图门控、只读隔离、反模式）、[oh-my-opencode-slim](https://github.com/alvinunreal/oh-my-opencode-slim)（调度器优先、后备链、拒绝契约、提示词缓存安全、impact×confidence÷cost）、[anomalyco/opencode](https://github.com/anomalyco/opencode)（配置 Schema、技能体系）、[cli/cli](https://github.com/cli/cli)（gh v2.98 命令集、rate limit、gh-aw）、[OpenSpec](https://github.com/Fission-AI/OpenSpec)（delta specs、OPSX 动作流 update/verify/四问）、[mattpocock/skills](https://github.com/mattpocock/skills)（冲突解析纪律、交接文档）、[pi](https://github.com/earendil-works/pi)（先答后改、精简响应、独立会话收集）和 [deepreview](https://github.com/mechanai/deepreview)（有效大小路由）的优点，纯配置实现，零额外依赖。
 
 > **借鉴而非照搬**：过重的流水线只汲取轻量化设计理念；冗余功能由现有 agents/skills 覆盖，不新增。遵循"精简优先于新增"原则，每次迭代都以净减 token 为目标。
 >
-> **本轮（v28）机制来源**：DeepSeek 缓存+thinking 纪律、scope-first+委派优先、原子 TODO 下沉进 AGENTS.md；新增 5 技能（wait-what/writing-for-agents/to-questionnaire/research/wizard）至 23 个；gh-cli 增补 4 条 GHSA 安全条目；删除 .ai/calibration.yml（校准规则内联进 code-review）。
+> **本轮（v35）机制来源**：`/learn` 命令（目录级 AGENTS.md 经验沉淀）、`references` 挂载 deepseek-harness（官方模型配置指引）、orchestrator `permission.task` 白名单（`"*":"deny"` + 10 子代理 allow）、gh-cli 版本对齐 v2.98、opencode-config 三模型约束、dcp.jsonc 1M 窗口修正——均借鉴 [anomalyco/opencode](https://github.com/anomalyco/opencode) 与 [deepseek-ai/deepseek-harness](https://github.com/deepseek-ai/deepseek-harness)。
 >
-> **评估后未采用**：mattpocock 的 issue-tracker 工作流（to-spec/to-tickets/triage/implement）过重；omo 的分类路由与按模型族定制提示词，对 3 模型纯配置而言过度设计；diagnosing-bugs 与 superpowers 的 systematic-debugging 重叠，未新增；superpowers 无配置旋钮，保持插件字符串形式注入。
+> **评估后未采用**：mattpocock 的 issue-tracker 工作流（to-spec/to-tickets/triage/implement）过重；omo 的分类路由与按模型族定制提示词，对 3 模型纯配置而言过度设计；diagnosing-bugs 与 superpowers 的 systematic-debugging 重叠，未新增；superpowers 无配置旋钮，保持插件字符串形式注入；opencode@dev 的 effect/rtl-aware-development 技能与 triage/duplicate-pr agent 为仓库专属，需专用 GitHub 工具，未引入。
 
 ### 迭代里程碑
 
-自 v1 以来历经 33 次迭代，持续对标上游仓库最佳实践：
+自 v1 以来历经 34 次迭代，持续对标上游仓库最佳实践：
 
 - **v1-v7（奠基）**：双模型绑定、Agent 角色体系、意图门控路由、AGENTS.md 全局规则、Skills 目录、权限基线
 - **v8-v15（审查+规约+契约）**：code-review 双轴校准、spec-workflow、gh-cli 对齐、拒绝契约、后台核查
@@ -273,6 +274,7 @@ OpenCode 通过原生 `skill` 工具按需暴露技能——Agent 只在需要�
 - **v32（会话复盘优化）**：基于三份真实会话日志（flash 配置/审查 + pro CAD）复盘。P0 子代理空结果降级（重试 1 次→停止告知用户，绝不内联硬扛重型实现）；P1 orchestrator 上下文卫生（不亲自探索/不加载领域 skill/子代理结果压缩转发/已验证事实传播/重审前核对覆盖）；P1 路由表补全（规模评估→explore、commit/push→/commit）；P2 opencode-config 技能修正（模型白名单引用 AGENTS.md、配置目录指针、read 工具防乱码、内置 validate-jsonc.js 校验器、新 agent 按角色分类）；P2 code-review 增全项目审查模式；P2 Git 安全禁目录级 `git add`
 - **v33（质量完善）**：修复 opencode.jsonc 尾随逗号；新增 .gitignore；增强 research 技能（18→78 行）；修正 orchestrator 路由表三处不一致（refactor 路由 oracle→deep-worker、simplify 路由明确 light-orchestrator、deploy/release 对齐 /release 命令）；spec-workflow 格式修补；opencode-config 技能增补 validate-jsonc.js 引用；simplify 命令模板明确 writer agent；新增 scripts/validate-jsonc.js 字符串感知校验器
 - **v34（定向瘦身 + 高价值借鉴）**：handoff 增 pi 结构化标题（Goal / Constraints & Preferences / Progress / Key Decisions / Next Steps / Critical Context）；shared-language 增"术语表即一切"与 ADR 分流规则（mattpocock）；gh-cli 增次级限流检测；opencode.jsonc thinking 注释修正为 provider 透传说明；README 修正快照（snapshot）过期声明、命令数核实为 19 条无误；核实两轴审查/delta specs/缓存纪律等上游理念已落地，未新增技能
+- **v35（借鉴 opencode@dev + 版本对齐）**：新增 `/learn` 命令（目录级 AGENTS.md 经验沉淀，借鉴 opencode@dev learn.md）；新增 `deepseek-harness` references 挂载（官方模型配置指引）；orchestrator 增 `permission.task` 白名单（`"*":"deny"` + 10 子代理 allow，借鉴 opencode@dev 单工具 agent 模式）；gh-cli 技能版本 v2.97→v2.98 对齐；opencode-config 技能模型约束更新为三模型（含 vision-exp）；dcp.jsonc 修正 128K→1M 窗口注释；命令数 19→20
 
 ## 仓库结构
 
@@ -293,7 +295,7 @@ OpenCode 通过原生 `skill` 工具按需暴露技能——Agent 只在需要�
 │   ├── skills/                   # 24 个按需加载技能
 │   │   ├── code-review/          # 轻量单遍审查 + 证据门控
 │   │   ├── codemap/              # 生成仓库结构图
-│   │   ├── gh-cli/               # GitHub CLI v2.97+ 参考 + 安全警告
+│   │   ├── gh-cli/               # GitHub CLI v2.98+ 参考 + 安全警告
 │   │   ├── git-master/           # 高级 Git 操作
 │   │   ├── git-release/          # Tag 发布
 │   │   ├── handoff/              # 会话压缩为交接文档
@@ -315,9 +317,9 @@ OpenCode 通过原生 `skill` 工具按需暴露技能——Agent 只在需要�
 │   │   ├── wait-what/            # 难懂消息先一句话重述确认
 │   │   ├── wizard/               # 人工逐步向导（bash -n 验证）
 │   │   └── writing-for-agents/   # 面向 agent 的文档写作
-│   ├── opencode.jsonc            # 主配置（19 条命令）
+│   ├── opencode.jsonc            # 主配置（20 条命令）
 │   ├── AGENTS.md                 # 全局规则
-│   └── dcp.jsonc                 # DCP 上下文压缩（DeepSeek 128K，60%/30% 百分比阈值）
+│   └── dcp.jsonc                 # DCP 上下文压缩（DeepSeek V4 1M，60%/30% 百分比阈值）
 ├── README.md
 ├── README.en-US.md
 └── LICENSE

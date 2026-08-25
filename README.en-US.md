@@ -205,6 +205,7 @@ This repo strictly divides work within the DeepSeek V4 model family — no other
 | Command | Agent | Purpose |
 | --- | --- | --- |
 | `/codemap` | `explore` (codemap) | Generate a repository structure map |
+| `/learn` | `light-orchestrator` | Distill non-obvious session learnings into directory-level AGENTS.md files (root/package/feature) |
 | `/simplify` | `oracle` (simplify) → `light-orchestrator` | oracle analyzes → light-orchestrator applies the simplifications |
 | `/rmslop` | `deep-worker` (remove-deadcode) | Clean up dead code and AI slop |
 
@@ -223,7 +224,7 @@ OpenCode exposes skills on demand via the native `skill` tool — agents load th
 | --- | --- |
 | `code-review` | Single-pass code review + evidence gating; large diffs (>~500 lines) split into Standards/Spec two axes merged into one report |
 | `codemap` | Generates an annotated repository structure map for quick orientation, saving exploration tokens |
-| `gh-cli` | GitHub CLI v2.97+ reference: PR posting, api, rate limits, gh pr checks, gh skill/gh-aw, GHSA security notes |
+| `gh-cli` | GitHub CLI v2.98+ reference: PR posting, api, rate limits, gh pr checks, gh skill/gh-aw, GHSA security notes |
 | `git-master` | Advanced Git operations: rebase, squash, fixup, bisect, reflog, code archaeology, worktrees |
 | `git-release` | Tagged releases: release notes, SemVer inference, gh release commands |
 | `resolving-merge-conflicts` | Resolve merge conflicts hunk by hunk: trace original intent, never invent new behavior, never --abort |
@@ -248,17 +249,17 @@ OpenCode exposes skills on demand via the native `skill` tool — agents load th
 
 ## Design Decisions & Iteration Log
 
-The core ideas draw on [oh-my-openagent](https://github.com/code-yeongyu/oh-my-openagent) (intent gating, read-only isolation, anti-patterns), [oh-my-opencode-slim](https://github.com/alvinunreal/oh-my-opencode-slim) (dispatcher-first, fallback chains, rejection contract, prompt-cache safety, impact×confidence÷cost), [anomalyco/opencode](https://github.com/anomalyco/opencode) (config schema, skill system), [cli/cli](https://github.com/cli/cli) (gh v2.97 command set, rate limits, gh-aw), [OpenSpec](https://github.com/Fission-AI/OpenSpec) (delta specs, OPSX action flow update/verify/four questions), [mattpocock/skills](https://github.com/mattpocock/skills) (conflict resolution discipline, handoff documents), [pi](https://github.com/earendil-works/pi) (answer first then act, terse responses, independent session collection), and [deepreview](https://github.com/mechanai/deepreview) (effective-size routing) — pure config, zero extra dependencies.
+The core ideas draw on [oh-my-openagent](https://github.com/code-yeongyu/oh-my-openagent) (intent gating, read-only isolation, anti-patterns), [oh-my-opencode-slim](https://github.com/alvinunreal/oh-my-opencode-slim) (dispatcher-first, fallback chains, rejection contract, prompt-cache safety, impact×confidence÷cost), [anomalyco/opencode](https://github.com/anomalyco/opencode) (config schema, skill system), [cli/cli](https://github.com/cli/cli) (gh v2.98 command set, rate limits, gh-aw), [OpenSpec](https://github.com/Fission-AI/OpenSpec) (delta specs, OPSX action flow update/verify/four questions), [mattpocock/skills](https://github.com/mattpocock/skills) (conflict resolution discipline, handoff documents), [pi](https://github.com/earendil-works/pi) (answer first then act, terse responses, independent session collection), and [deepreview](https://github.com/mechanai/deepreview) (effective-size routing) — pure config, zero extra dependencies.
 
 > **Borrow, don't copy**: from heavyweight pipelines we take only lightweight design ideas; redundant features are covered by existing agents/skills, so nothing new is added. Following the "simplify before adding" principle, every iteration targets net token reduction.
 >
-> **This round (v28) — mechanism sources**: DeepSeek cache + thinking discipline, scope-first + delegate-always, atomic TODOs pushed down into AGENTS.md; 5 new skills (wait-what/writing-for-agents/to-questionnaire/research/wizard) bringing the total to 23; gh-cli gains 4 GHSA security entries; removed .ai/calibration.yml (calibration rules inlined into code-review).
+> **This round (v35) — mechanism sources**: the `/learn` command (directory-level AGENTS.md learning distillation), `references` mounting deepseek-harness (official model-config guidance), orchestrator `permission.task` allowlist (`"*":"deny"` + 10 subagents allow), gh-cli version alignment to v2.98, opencode-config three-model constraint, dcp.jsonc 1M-window fix — all borrowed from [anomalyco/opencode](https://github.com/anomalyco/opencode) and [deepseek-ai/deepseek-harness](https://github.com/deepseek-ai/deepseek-harness).
 >
-> **Evaluated and rejected**: mattpocock's issue-tracker workflow (to-spec/to-tickets/triage/implement) is too heavy; omo's category-based routing and model-family-specific prompts are over-engineering for a 3-model pure-config setup; diagnosing-bugs overlaps superpowers' systematic-debugging; superpowers has no config knobs, so it remains injected as a plugin string.
+> **Evaluated and rejected**: mattpocock's issue-tracker workflow (to-spec/to-tickets/triage/implement) is too heavy; omo's category-based routing and model-family-specific prompts are over-engineering for a 3-model pure-config setup; diagnosing-bugs overlaps superpowers' systematic-debugging; superpowers has no config knobs, so it remains injected as a plugin string; opencode@dev's effect/rtl-aware-development skills and triage/duplicate-pr agents are repo-specific and need dedicated GitHub tools, so they were not adopted.
 
 ### Iteration Milestones
 
-33 iterations since v1, continuously benchmarking best practices from upstream repositories:
+34 iterations since v1, continuously benchmarking best practices from upstream repositories:
 
 - **v1-v7 (foundation)**: dual-model binding, agent role system, intent-gate routing, AGENTS.md global rules, skills directory, permission baseline
 - **v8-v15 (review + specs + contract)**: code-review two-axis calibration, spec-workflow, gh-cli alignment, rejection contract, background verification
@@ -273,6 +274,7 @@ The core ideas draw on [oh-my-openagent](https://github.com/code-yeongyu/oh-my-o
 - **v32 (session-review optimization)**: reviewed three real session logs (flash config/review + pro CAD). P0 subagent empty-result fallback (retry once → stop and tell the user, never inline heavy implementation); P1 orchestrator context hygiene (no self-exploration / no self-loading domain skills / summarize subagent results before forwarding / propagate verified facts / check coverage before re-review); P1 routing table completion (scoping→explore, commit/push→/commit); P2 opencode-config skill fixes (model allowlist references AGENTS.md, config-dir pointer, read-tool mojibake note, bundled validate-jsonc.js, classify new agents by role); P2 code-review gains full-project audit mode; P2 Git safety bans directory-level `git add`
 - **v33 (quality hardening)**: fixed opencode.jsonc trailing comma; added .gitignore; enhanced research skill (18→78 lines); fixed three orchestrator routing table inconsistencies (refactor → oracle→deep-worker, simplify → oracle→light-orchestrator, deploy/release aligned with /release command); spec-workflow formatting fix; opencode-config skill now references validate-jsonc.js; simplify command template clarifies writer agent; added scripts/validate-jsonc.js with string-aware comment stripping
 - **v34 (targeted slimming + high-value borrows)**: handoff gains pi's structured headings (Goal / Constraints & Preferences / Progress / Key Decisions / Next Steps / Critical Context); shared-language gains "glossary and nothing else" + ADR triage (mattpocock); gh-cli gains secondary rate-limit detection; opencode.jsonc thinking comment corrected to provider passthrough; README fixed the stale snapshot claim (command count verified correct at 19); confirmed two-axis review / delta specs / cache discipline already implemented — no new skills added
+- **v35 (borrow from opencode@dev + version alignment)**: added the `/learn` command (directory-level AGENTS.md learning distillation, from opencode@dev learn.md); added the `deepseek-harness` reference mount (official model-config guidance); orchestrator gains a `permission.task` allowlist (`"*":"deny"` + 10 subagents allow, from opencode@dev's single-tool agent pattern); gh-cli skill version aligned v2.97→v2.98; opencode-config skill model constraint updated to three models (incl. vision-exp); dcp.jsonc comment fixed 128K→1M window; command count 19→20
 
 ## Repository Structure
 
@@ -293,7 +295,7 @@ The core ideas draw on [oh-my-openagent](https://github.com/code-yeongyu/oh-my-o
 │   ├── skills/                   # 24 on-demand skills
 │   │   ├── code-review/          # lightweight single-pass review + evidence gating
 │   │   ├── codemap/              # generates repository structure map
-│   │   ├── gh-cli/               # GitHub CLI v2.97+ reference + security advisory
+│   │   ├── gh-cli/               # GitHub CLI v2.98+ reference + security advisory
 │   │   ├── git-master/           # advanced Git operations
 │   │   ├── git-release/          # Tag releases
 │   │   ├── handoff/              # compress sessions into handoff docs
@@ -315,9 +317,9 @@ The core ideas draw on [oh-my-openagent](https://github.com/code-yeongyu/oh-my-o
 │   │   ├── wait-what/            # restates hard-to-parse messages in one sentence for confirmation
 │   │   ├── wizard/               # human step-by-step wizard (bash -n verified)
 │   │   └── writing-for-agents/   # writing for agent-facing docs
-│   ├── opencode.jsonc            # main config (19 commands)
+│   ├── opencode.jsonc            # main config (20 commands)
 │   ├── AGENTS.md                 # global rules
-│   └── dcp.jsonc                 # DCP context compression (DeepSeek 128K, 60%/30% percentage thresholds)
+│   └── dcp.jsonc                 # DCP context compression (DeepSeek V4 1M, 60%/30% percentage thresholds)
 ├── README.md
 ├── README.en-US.md
 └── LICENSE

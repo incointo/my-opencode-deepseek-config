@@ -1,11 +1,11 @@
 ---
 name: gh-cli
-description: Patterns for invoking the GitHub CLI (gh v2.97.0+) from agents. Use when the task mentions GitHub, gh, pull requests/PRs, issues, releases, gists, Actions/workflow runs, forks, repo cloning, reviews, or you need exact gh commands. Covers pagination, repo targeting, search vs list, discussions, projects, rulesets, skills, and gh api fallback.
+description: Patterns for invoking the GitHub CLI (gh v2.98.0+) from agents. Use when the task mentions GitHub, gh, pull requests/PRs, issues, releases, gists, Actions/workflow runs, forks, repo cloning, reviews, or you need exact gh commands. Covers pagination, repo targeting, search vs list, discussions, projects, rulesets, skills, and gh api fallback.
 ---
 
 # GitHub CLI (`gh`) agent patterns
 
-Authoritative patterns for driving the official `gh` CLI (v2.97.0) from agents,
+Authoritative patterns for driving the official `gh` CLI (v2.98.0) from agents,
 based on [cli/cli](https://github.com/cli/cli) trunk. Prefer `gh` over raw `curl`
 or `gh api` — `gh` handles auth, pagination, and JSON output automatically.
 
