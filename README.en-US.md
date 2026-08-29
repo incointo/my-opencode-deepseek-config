@@ -14,7 +14,7 @@
 - Context compression: built-in compaction (opencode.jsonc) handles auto-triggering + pruning of stale tool output; DCP (dcp.jsonc) handles proactive dedup + compression thresholds — the two complement each other
 - Global rules: `AGENTS.md` (core principles, task rejection contract, self-verification, anti-patterns, etc.; context/token discipline in `AGENTS.md`)
 - Skills: **24** `SKILL.md` skills under `skills/`, loaded on demand via the native `skill` tool
-- Plugins: `superpowers` (git URL tracking main branch, process skills), `@tarquinen/opencode-dcp` (intelligent context pruning)
+- Plugins: `superpowers` (git URL pinned to tag `#v6.3.0`, process skills), `@tarquinen/opencode-dcp` (pinned to `@3.1.15`, intelligent context pruning); both are version-pinned to keep the prefix byte-stable and prevent prefix drift from auto-updates
 
 ## DeepSeek Model Configuration
 
@@ -271,6 +271,7 @@ The core ideas draw on [oh-my-openagent](https://github.com/code-yeongyu/oh-my-o
 - **v33 (quality hardening)**: fixed opencode.jsonc trailing comma; added .gitignore; enhanced research skill (18→78 lines); fixed three orchestrator routing table inconsistencies (refactor → oracle→deep-worker, simplify → oracle→light-orchestrator, deploy/release aligned with /release command); spec-workflow formatting fix; opencode-config skill now references validate-jsonc.js; simplify command template clarifies writer agent; added scripts/validate-jsonc.js with string-aware comment stripping
 - **v34 (targeted slimming + high-value borrows)**: handoff gains pi's structured headings (Goal / Constraints & Preferences / Progress / Key Decisions / Next Steps / Critical Context); shared-language gains "glossary and nothing else" + ADR triage (mattpocock); gh-cli gains secondary rate-limit detection; opencode.jsonc thinking comment corrected to provider passthrough; README fixed the stale snapshot claim (command count verified correct at 19); confirmed two-axis review / delta specs / cache discipline already implemented — no new skills added
 - **v35 (borrow from opencode@dev + version alignment)**: added the `/learn` command (directory-level AGENTS.md learning distillation, from opencode@dev learn.md); added the `deepseek-harness` reference mount (official model-config guidance); orchestrator gains a `permission.task` allowlist (`"*":"deny"` + 10 subagents allow, from opencode@dev's single-tool agent pattern); gh-cli skill version aligned v2.97→v2.98; opencode-config skill model constraint updated to three models (incl. vision-exp); dcp.jsonc comment fixed 128K→1M window; command count 19→20
+- **v36 (benchmark 5 repos + pin plugin versions)**: surveyed oh-my-openagent / OpenSpec / oh-my-opencode-slim / pi / deepseek-harness and confirmed most cost-saving and lightweight-review ideas were already internalized (thinking split, byte-stable prefix, tool-output pruning, dual-layer compaction, findings grading + evidence, verdict aggregation, anti-pattern table, review not parallel with edits); added only incremental items: AGENTS.md loop detection (3+ consecutive identical tool calls = spinning, stop and re-evaluate, from deepseek-harness repeat-tool-reminder); code-review gains 2 explicit anti-patterns (serial spawn→CRITICAL, concluding without reading files→HIGH); gh-cli gains v2.98+ commands (`--search-type semantic`, issue types/sub-issues/relationships, `--attach`, `gh repo read-file/read-dir`, `gh skill publish`, `GH_FORCE_TTY`); pinned plugin versions (superpowers `#v6.3.0`, DCP `@3.1.15`, `autoUpdate:false`) to keep the prefix byte-stable; README structure diagram dcp.jsonc comment corrected to absolute token thresholds 77K/38K
 
 ## Repository Structure
 
@@ -315,7 +316,7 @@ The core ideas draw on [oh-my-openagent](https://github.com/code-yeongyu/oh-my-o
 │   │   └── writing-for-agents/   # writing for agent-facing docs
 │   ├── opencode.jsonc            # main config (20 commands)
 │   ├── AGENTS.md                 # global rules
-│   └── dcp.jsonc                 # DCP context compression (DeepSeek V4 1M, 60%/30% percentage thresholds)
+│   └── dcp.jsonc                 # DCP context compression (DeepSeek V4 1M, absolute token thresholds 77K/38K)
 ├── README.md
 ├── README.en-US.md
 └── LICENSE
@@ -373,7 +374,7 @@ Describe your needs in natural language; the Orchestrator analyzes intent and pi
 - **Pure config-driven, zero extra dependencies** — every capability comes from `opencode.jsonc` + `agents/*.md` + `skills/*/SKILL.md` + `AGENTS.md`
 - **Maximum use of the DeepSeek V4 model family** — Pro for deep reasoning and heavy implementation, Flash for routing, planning, and routine execution, Flash-Vision for multimodal tasks
 - **Token efficiency first** — path references instead of pasted files, skills loaded on demand, tiered compression management
-- **Plugins add value without stealing the spotlight** — superpowers provides process discipline, DCP (dcp.jsonc) handles proactive dedup + compression thresholds, built-in compaction (opencode.jsonc) handles auto-trigger + prune fallback
+- **Plugins add value without stealing the spotlight** — superpowers provides process discipline, DCP (dcp.jsonc) handles proactive dedup + compression thresholds, built-in compaction (opencode.jsonc) handles auto-trigger + prune fallback; both plugins are version-pinned to keep the prefix byte-stable and prevent prefix drift from auto-updates
 - **Execution separated from exploration** — deep-worker/light-orchestrator must not research or delegate; explore/librarian must not modify
 - **Cache + thinking discipline** — stable static prefixes to hit DeepSeek's prompt cache; flash disables thinking + temperature 0 (provider layer), pro keeps thinking on by default
 - **Scope First + Delegate Always** — define scope first (2+ steps / multi-file / architecture changes go through planner), then delegate execution; top-level tokens are reserved for routing and hard problems

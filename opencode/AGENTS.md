@@ -51,6 +51,7 @@ orchestrator prompt (`agents/orchestrator.md`).
   single-shot tasks run on flash so their volatile content never enters the
   pro prompt-cache prefix.
 - **reasoning_content** must round-trip on tool calls (opencode handles it); never reorder messages in ways that break it.
+- **循环检测.** 连续 3+ 次相同工具调用且无进展 → 视为空转，停下重新评估：换策略或上报，勿重复调用烧 token。
 
 ## Scope First + Delegate Always
 

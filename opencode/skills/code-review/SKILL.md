@@ -164,3 +164,5 @@ To publish findings (e.g. `/review-pr`), load the `gh-cli` skill — its
 - Follow AGENTS.md quality and comment rules.
 - Cite concrete `file:line` locations.
 - No performative positivity or inflated severity.
+- 串行 spawn 多个独立审查 → **CRITICAL** — 应并行 dispatch（见 AGENTS.md 并行纪律）。
+- 不读文件就下结论 → **HIGH** — 违反 "Read before you write"。

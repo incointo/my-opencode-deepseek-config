@@ -61,6 +61,7 @@ color, and errors fast instead of prompting.
 | `GH_NO_UPDATE_NOTIFIER=1` | Skip version check (saves a request) |
 | `NO_COLOR=1` | Strip ANSI color from output |
 | `GH_DEBUG=api` | Log HTTP request/response for debugging |
+| `GH_FORCE_TTY=1` | Force TTY output even when piped (debug color/rendering) |
 | `GH_TELEMETRY=false` | Disable telemetry (opt-out; default enabled since v2.91.0) |
 
 ## Parsing JSON
@@ -102,6 +103,10 @@ override. Set `GH_REPO=OWNER/REPO` for session-wide default.
 - Full qualifier syntax (v2.79.0+): `author:`, `label:`, `milestone:`, `assignee:`,
   `review:`, `status:`, `base:`, `head:`, `merged:`, `created:`, `updated:`,
   `closed:`, `comments:`, `interactions:`, `reactions:`.
+- `gh search issues --search-type <lexical|semantic|hybrid>` (v2.98+): semantic
+  relevance-ranked search, default `lexical`. `semantic`/`hybrid` are issue-only
+  (reject `--include-prs`, `--sort`/`--order`, `--web`), bound to one page
+  (separate 10/min bucket), github.com/ghe.com only — not single-tenant GHES.
 
 ## Reviewing PRs (`gh pr review` vs inline comments)
 
@@ -214,6 +219,7 @@ gh skill install owner/repo --agent opencode --upstream # pull from upstream rem
 gh skill install cli/cli gh --scope user                # self-install gh's own skill
 
 gh skill update <skill-id> [--all] [--dry-run]
+gh skill publish [<dir>] [--dry-run] [--tag <v>] [--fix]  # validate skills + cut a release
 
 Default scope is `project`; default agent is `github-copilot` — always pass
 `--agent opencode` (installs to ~/.config/opencode/skills/). Supported --agent
@@ -246,14 +252,22 @@ Note: Releases created with v2.93.0+ are immutable — JSON output includes an
 `isImmutable` field. Use `gh release download <tag>` (no auth for public repos,
 v2.96.0+) to fetch artifacts.
 
+## Attachments (`--attach`)
+
+`--attach <path>` works on `gh issue`/`gh pr` `create`/`edit`/`comment`, repeatable
+up to 50 per item. Formats: png/jpg/gif/webp/svg (images) and mp4/mov/webm
+(video). Image alt text follows a `#` suffix: `--attach 'shot.png#crash screenshot'`.
+
+gh issue create --title "crash" --attach shot.png#crash --attach repro.mp4
+
 ## Cold subcommands (one-liners)
 
 - `gh project` — V2 projects: `item-add`/`item-list`/`item-edit`/`field-list`; by-name field editing `--field "Status" --value "Done"` (v2.97.0+).
 - `gh ruleset` — `list`/`view`/`check -b <branch>` (compliance).
 - `gh cache` — `list`/`delete`; `delete --succeed-on-no-caches` exits 0 when none match.
-- `gh repo read-file`/`read-dir` — read repo contents without cloning (`--ref`, `--output`, `--clobber`); piped output is raw bytes, binary auto-refused.
+- `gh repo read-file <path>`/`read-dir [<path>]` — read repo contents without cloning (`--ref`, `--output`, `--clobber`); piped output is raw bytes, binary auto-refused.
 - `gh discussion` — `list`/`view`/`create`/`comment`/`edit` (v2.94.0 preview).
-- `gh issue create/edit` — `--type Bug|Feature|Task`, `--parent`, `--blocked-by`, `--blocking`, `--add-sub-issue` (types GHES 3.17+, relationships 3.19+).
+- `gh issue create/edit` — `--type Bug|Feature|Task`, `--parent`, `--blocked-by`, `--blocking`; edit adds `--add-sub-issue`/`--add-blocked-by`/`--add-blocking` and `--remove-*` (types GHES 3.17+, relationships 3.19+).
 - `gh gist` — `create`/`list`/`view --raw`/`edit`/`delete`/`clone`.
 - `gh secret` / `gh variable` — set/list/remove; scoped repo/org/env. `gh codespace` — `list`/`create`/`stop`/`delete`/`logs`/`ssh`/`ports`.
 - `gh config` — `set`/`get`/`list`/`clear-cache` (editor, git_protocol, prompt). `gh extension` — `install`/`list`/`upgrade`/`remove`/`search`/`create` (no auth since v2.90.0). `gh alias` — `set`/`list`/`delete`; `--shell` pipes to editors.

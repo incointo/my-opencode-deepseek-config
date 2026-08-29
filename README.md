@@ -14,7 +14,7 @@
 - 上下文压缩：内置 compaction（opencode.jsonc）管自动触发 + prune 裁旧工具输出，DCP（dcp.jsonc）管主动去重 + 压缩阈值，两者互补
 - 全局规则：`AGENTS.md`（核心原则、任务拒绝契约、自我验证、反模式等；上下文/Token 纪律在 `AGENTS.md`）
 - 技能：`skills/` 目录下 **24 个** `SKILL.md` 技能，通过原生 `skill` 工具按需加载
-- 插件：`superpowers`（git URL 跟踪 main 分支，过程型技能）、`@tarquinen/opencode-dcp`（智能上下文裁剪）
+- 插件：`superpowers`（git URL 固定 tag `#v6.3.0`，过程型技能）、`@tarquinen/opencode-dcp`（固定版本 `@3.1.15`，智能上下文裁剪）；两者均固定版本（pin）以保证字节稳定前缀、避免自动更新导致的前缀漂移
 
 ## DeepSeek 模型配置
 
@@ -271,6 +271,7 @@ OpenCode 通过原生 `skill` 工具按需暴露技能——Agent 只在需要�
 - **v33（质量完善）**：修复 opencode.jsonc 尾随逗号；新增 .gitignore；增强 research 技能（18→78 行）；修正 orchestrator 路由表三处不一致（refactor 路由 oracle→deep-worker、simplify 路由明确 light-orchestrator、deploy/release 对齐 /release 命令）；spec-workflow 格式修补；opencode-config 技能增补 validate-jsonc.js 引用；simplify 命令模板明确 writer agent；新增 scripts/validate-jsonc.js 字符串感知校验器
 - **v34（定向瘦身 + 高价值借鉴）**：handoff 增 pi 结构化标题（Goal / Constraints & Preferences / Progress / Key Decisions / Next Steps / Critical Context）；shared-language 增"术语表即一切"与 ADR 分流规则（mattpocock）；gh-cli 增次级限流检测；opencode.jsonc thinking 注释修正为 provider 透传说明；README 修正快照（snapshot）过期声明、命令数核实为 19 条无误；核实两轴审查/delta specs/缓存纪律等上游理念已落地，未新增技能
 - **v35（借鉴 opencode@dev + 版本对齐）**：新增 `/learn` 命令（目录级 AGENTS.md 经验沉淀，借鉴 opencode@dev learn.md）；新增 `deepseek-harness` references 挂载（官方模型配置指引）；orchestrator 增 `permission.task` 白名单（`"*":"deny"` + 10 子代理 allow，借鉴 opencode@dev 单工具 agent 模式）；gh-cli 技能版本 v2.97→v2.98 对齐；opencode-config 技能模型约束更新为三模型（含 vision-exp）；dcp.jsonc 修正 128K→1M 窗口注释；命令数 19→20
+- **v36（对标 5 仓库 + 插件固定版本）**：综合 oh-my-openagent / OpenSpec / oh-my-opencode-slim / pi / deepseek-harness 五仓库调研，确认多数省钱与轻量审查理念已内化（thinking 拆分、字节稳定前缀、tool 裁剪、compaction 双层、findings 分级+证据、verdict 聚合、反模式表、review 不与编辑并行），仅补增量：AGENTS.md 增循环检测（连续 3+ 次相同工具调用视为空转，防 token 空转，借鉴 deepseek-harness repeat-tool-reminder）；code-review 增 2 条显式反模式（串行 spawn→CRITICAL、不读文件下结论→HIGH）；gh-cli 增 v2.98+ 命令（`--search-type semantic`、issue 类型/子 issue/关系、`--attach` 附件、`gh repo read-file/read-dir`、`gh skill publish`、`GH_FORCE_TTY`）；插件固定版本（superpowers `#v6.3.0`、DCP `@3.1.15`、`autoUpdate:false`）以保字节稳定前缀；README 结构图 dcp.jsonc 注释修正为绝对 token 阈值 77K/38K
 
 ## 仓库结构
 
@@ -315,7 +316,7 @@ OpenCode 通过原生 `skill` 工具按需暴露技能——Agent 只在需要�
 │   │   └── writing-for-agents/   # 面向 agent 的文档写作
 │   ├── opencode.jsonc            # 主配置（20 条命令）
 │   ├── AGENTS.md                 # 全局规则
-│   └── dcp.jsonc                 # DCP 上下文压缩（DeepSeek V4 1M，60%/30% 百分比阈值）
+│   └── dcp.jsonc                 # DCP 上下文压缩（DeepSeek V4 1M，绝对 token 阈值 77K/38K）
 ├── README.md
 ├── README.en-US.md
 └── LICENSE
@@ -373,7 +374,7 @@ OpenCode 通过原生 `skill` 工具按需暴露技能——Agent 只在需要�
 - **纯配置驱动，零额外依赖** —— 所有能力由 `opencode.jsonc` + `agents/*.md` + `skills/*/SKILL.md` + `AGENTS.md` 实现
 - **DeepSeek V4 模型族极致利用** —— Pro 做深度推理与重型实现，Flash 做路由、规划与常规执行，Flash-Vision 专责多模态
 - **Token 效率优先** —— 路径引用替代粘贴文件、技能按需加载、压缩分级管理
-- **插件增效但不喧宾夺主** —— superpowers 提供过程纪律，DCP（dcp.jsonc）主动去重+压缩阈值，内置 compaction（opencode.jsonc）自动触发+prune 兜底
+- **插件增效但不喧宾夺主** —— superpowers 提供过程纪律，DCP（dcp.jsonc）主动去重+压缩阈值，内置 compaction（opencode.jsonc）自动触发+prune 兜底；两插件均固定版本（pin）以保字节稳定前缀，避免自动更新导致前缀漂移
 - **执行与探索分离** —— deep-worker/light-orchestrator 禁止研究/委托，explore/librarian 禁止修改
 - **缓存与 thinking 纪律** —— 静态前缀稳定以命中 DeepSeek 提示词缓存；flash 关 thinking + temperature 0（provider 层），pro 默认 thinking 开
 - **Scope First + Delegate Always** —— 先定范围（2+ 步/多文件/架构变更先走 planner），再委派执行，顶层 token 只留给路由与难题
