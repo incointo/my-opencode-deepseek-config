@@ -21,6 +21,11 @@ permission:
     "gh pr diff*": allow
     "gh issue view*": allow
     "gh api*": allow
+  skills:
+    "*": "deny"
+    code-review: "allow"
+    security-review: "allow"
+    gh-cli: "allow"
 ---
 
 # Reviewer

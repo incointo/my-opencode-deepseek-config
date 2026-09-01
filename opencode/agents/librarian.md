@@ -11,6 +11,9 @@ permission:
   task: deny
   bash:
     "*": deny
+  skills:
+    "*": "deny"
+    verify-with-docs: "allow"
 ---
 
 # Librarian
@@ -46,7 +49,6 @@ When research requires deep cross-referencing or nuanced interpretation, ask the
 ```
 
 ## Rules
-- For deep cited research, reference the research skill.
 - Always cite sources with URLs
 - Prefer official documentation over tutorials
 - If documentation is unclear or missing, say so explicitly

@@ -57,8 +57,28 @@
     // toggle — {"type":"enabled"|"disabled"}).
     "provider": {
         "deepseek": {
+            // DeepSeek's OpenAI-compatible gateway has two pitfalls: reasoning
+            // models reject a system prompt sent as role:"developer", and an
+            // output limit sent as max_completion_tokens is also rejected.
+            // These compat flags make OpenCode fall back to role:"system" and
+            // the max_tokens field instead.
+            "compat": {
+                "supportsDeveloperRole": false,
+                "maxTokensField": "max_tokens"
+            },
+            // `cost` is USD per 1M tokens, off-peak rates effective with the
+            // 2026-08-16 peak/off-peak pricing; peak hours charge double these
+            // values. DeepSeek publishes no standalone cache-write price —
+            // cache writes bill at the cache-miss input rate, so cache_write
+            // is mapped from input.
             "models": {
                 "deepseek-v4-flash": {
+                    "cost": {
+                        "input": 0.22,
+                        "output": 0.66,
+                        "cache_read": 0.007,
+                        "cache_write": 0.22
+                    },
                     "options": {
                         "temperature": 0,
                         "thinking": { "type": "disabled" }
@@ -69,9 +89,23 @@
                         "input": ["text", "image"],
                         "output": ["text"]
                     },
+                    "cost": {
+                        "input": 0.22,
+                        "output": 0.66,
+                        "cache_read": 0.007,
+                        "cache_write": 0.22
+                    },
                     "options": {
                         "temperature": 0,
                         "thinking": { "type": "disabled" }
+                    }
+                },
+                "deepseek-v4-pro": {
+                    "cost": {
+                        "input": 0.66,
+                        "output": 1.98,
+                        "cache_read": 0.022,
+                        "cache_write": 0.66
                     }
                 }
             }
@@ -158,20 +192,10 @@
             "agent": "planner",
             "template": "Create a detailed plan for the following."
         },
-        "search": {
-            "description": "Route to librarian for external research",
-            "agent": "librarian",
-            "template": "Research and find information about the following."
-        },
         "oracle": {
             "description": "Route to oracle for deep code analysis and root cause debugging",
             "agent": "oracle",
             "template": "Analyze and find the root cause of the following."
-        },
-        "consult": {
-            "description": "Route to consultant for brainstorming and best-practice advice",
-            "agent": "consultant",
-            "template": "Provide options and advice for the following."
         },
 
         "release": {

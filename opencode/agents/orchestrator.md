@@ -18,6 +18,9 @@ permission:
     librarian: "allow"
     light-orchestrator: "allow"
     vision: "allow"
+  skills:
+    "*": "deny"
+    codemap: "allow"
 ---
 
 # Orchestrator

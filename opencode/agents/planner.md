@@ -8,6 +8,9 @@ color: "#9B59B6"
 permission:
   task:
     "*": "deny"
+  skills:
+    "*": "deny"
+    spec-workflow: "allow"
 ---
 
 # Planner

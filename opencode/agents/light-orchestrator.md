@@ -9,6 +9,11 @@ permission:
   task:
     "*": "deny"
     oracle: "allow"
+  skills:
+    "*": "deny"
+    handoff: "allow"
+    simplify: "allow"
+    spec-workflow: "allow"
 ---
 
 # Light Orchestrator

@@ -21,6 +21,10 @@ permission:
     "gh pr diff*": allow
     "gh issue view*": allow
     "gh api*": allow
+  skills:
+    "*": "deny"
+    reflect: "allow"
+    simplify: "allow"
 ---
 
 # Oracle

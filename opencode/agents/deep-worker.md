@@ -8,6 +8,11 @@ color: "#E24A4A"
 permission:
   task:
     "*": "deny"
+  skills:
+    "*": "deny"
+    remove-deadcode: "allow"
+    spec-workflow: "allow"
+    git-release: "allow"
 ---
 
 # Deep Worker
