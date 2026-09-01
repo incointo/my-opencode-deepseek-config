@@ -8,6 +8,9 @@ color: "#3498DB"
 permission:
   task:
     "*": "deny"
+  skills:
+    "*": "deny"
+    shared-language: "allow"
 ---
 
 # Consultant

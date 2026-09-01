@@ -186,9 +186,9 @@ This repo strictly divides work within the DeepSeek V4 model family — no other
 
 > `deep-worker` and `light-orchestrator` follow a "no research, no delegation" principle — they execute, not explore; context is provided by the orchestrator.
 >
-> Read-only agents (`oracle`/`reviewer`/`explore`/`librarian`) are truly read-only: `edit: deny` + a bash allowlist (deny all by default, allow only read-only subcommands such as `git status/diff/log/show/blame/grep` and `rg`; `oracle`/`reviewer` additionally allow `gh pr view/diff`, `gh issue view`, and `gh api` to support `/review-pr` replies).
+> Read-only agents (`oracle`/`reviewer`/`explore`) are truly read-only: `edit: deny` + a bash allowlist (deny all by default, allow only read-only subcommands such as `git status/diff/log/show/blame/grep` and `rg`; `oracle`/`reviewer` additionally allow `gh pr view/diff`, `gh issue view`, and `gh api` to support `/review-pr` replies). `librarian` is stricter: `bash: "*": deny`, no bash allowlist at all.
 >
-> Each agent carries a `skills` allowlist (deny by default + allow by role, to prevent loading heavyweight skills): `orchestrator` → `codemap`; `planner` → `spec-workflow`; `deep-worker` → `remove-deadcode`/`spec-workflow`/`git-release`; `oracle` → `reflect`/`simplify`; `reviewer` → `code-review`/`security-review`/`gh-cli`; `explore` → `codemap`; `librarian` → `verify-with-docs`; `light-orchestrator` → `handoff`/`simplify`/`spec-workflow`; `consultant`/`ui-builder`/`vision` have none.
+> Each agent carries a `skills` allowlist (deny by default + allow by role, to prevent loading heavyweight skills): `orchestrator` → `codemap`/`grilling`/`wait-what`; `planner` → `spec-workflow`; `deep-worker` → `remove-deadcode`/`spec-workflow`/`git-release`/`to-tickets`/`triage`/`git-master`/`resolving-merge-conflicts`/`opencode-config`/`writing-for-agents`; `oracle` → `reflect`/`simplify`; `reviewer` → `code-review`/`security-review`/`gh-cli`; `explore` → `codemap`; `librarian` → `verify-with-docs`; `light-orchestrator` → `handoff`/`simplify`/`spec-workflow`; `consultant` → `shared-language`; `ui-builder`/`vision` have none.
 
 ## Quick Commands
 
@@ -313,7 +313,7 @@ Describe your needs in natural language; the Orchestrator analyzes intent and pi
 
 ## Sources
 
-The core ideas draw on [oh-my-openagent](https://github.com/code-yeongyu/oh-my-openagent) (intent gating, read-only isolation, anti-patterns), [oh-my-opencode-slim](https://github.com/alvinunreal/oh-my-opencode-slim) (dispatcher-first, fallback chains, rejection contract, prompt-cache safety), [anomalyco/opencode](https://github.com/anomalyco/opencode) (config schema, skill system), [cli/cli](https://github.com/cli/cli) (gh v2.98 command set), [OpenSpec](https://github.com/Fission-AI/OpenSpec) (delta specs), [mattpocock/skills](https://github.com/mattpocock/skills) (conflict resolution, handoff documents), [pi](https://github.com/earendil-works/pi) (answer first then act, terse responses), and [deepreview](https://github.com/mechanai/deepreview) (effective-size routing). Pure config, zero extra dependencies. **Borrow, don't copy**: take only lightweight design ideas, simplify before adding. 37 iterations to date — see git log.
+The core ideas draw on [oh-my-openagent](https://github.com/code-yeongyu/oh-my-openagent) (intent gating, read-only isolation, anti-patterns), [oh-my-opencode-slim](https://github.com/alvinunreal/oh-my-opencode-slim) (dispatcher-first, fallback chains, rejection contract, prompt-cache safety), [anomalyco/opencode](https://github.com/anomalyco/opencode) (config schema, skill system), [cli/cli](https://github.com/cli/cli) (gh v2.98 command set), [OpenSpec](https://github.com/Fission-AI/OpenSpec) (delta specs), [mattpocock/skills](https://github.com/mattpocock/skills) (conflict resolution, handoff documents), [pi](https://github.com/earendil-works/pi) (answer first then act, terse responses), and [deepreview](https://github.com/mechanai/deepreview) (effective-size routing). Pure config, zero extra dependencies. **Borrow, don't copy**: take only lightweight design ideas, simplify before adding.
 
 ## Design Philosophy
 

@@ -100,8 +100,7 @@ never up.
 
 ## Under-claim + suppress known-design noise
 
-Assign only the level the evidence supports — when in doubt, go one level down,
-never up. Treat documented decisions (caller context note, `AGENTS.md`/`CLAUDE.md`)
+Under-claim per the Severity levels rule above. Treat documented decisions (caller context note, `AGENTS.md`/`CLAUDE.md`)
 as intentional; flag only when concretely unsafe.
 
 ## Approval gate
@@ -111,7 +110,7 @@ evidence. A requirement is the diff's stated purpose, an AGENTS.md rule, or a
 concrete broken behavior you can point at. A gap you cannot tie to such a
 criterion is a NOTE (minor/nit), not a blocker. Blockers are `critical` and
 `major` only. Omit issues a green gate (CI/lint/typecheck) already enforces.
-Under-claim: when in doubt go one severity level down, never up. A short
+Under-claim per the Severity levels rule above. A short
 review with one substantiated blocker beats a long list of nits.
 
 ## Report format
@@ -164,5 +163,3 @@ To publish findings (e.g. `/review-pr`), load the `gh-cli` skill — its
 - Follow AGENTS.md quality and comment rules.
 - Cite concrete `file:line` locations.
 - No performative positivity or inflated severity.
-- 串行 spawn 多个独立审查 → **CRITICAL** — 应并行 dispatch（见 AGENTS.md 并行纪律）。
-- 不读文件就下结论 → **HIGH** — 违反 "Read before you write"。

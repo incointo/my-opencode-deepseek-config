@@ -33,7 +33,7 @@
     "customPrompts": false
   },
 
-  // 受保护文件模式：不裁剪这些文件的操作
+  // Protected file patterns: never prune operations on these files
   "protectedFilePatterns": [
     "**/opencode.jsonc",
     "**/AGENTS.md",
@@ -44,31 +44,31 @@
   // ══════════════════════════════════════════════════════════════
   // Compression strategy — tuned for DeepSeek V4 (1M context window)
   // Core principle: proactive compression > passive overflow; DCP compresses proactively at the 77K threshold, native auto compaction is the near-overflow fallback — the two complement each other
-  // 分工：内置 compaction 管自动触发 + prune（opencode.jsonc）；DCP 管主动去重 + 压缩阈值。两者互补。
+  // Division of labor: built-in compaction handles auto-trigger + prune (opencode.jsonc); DCP handles proactive dedup + compression thresholds. The two complement each other.
   // ══════════════════════════════════════════════════════════════
   "compress": {
-    // range 模式：将连续对话范围压缩为高保真摘要
+    // range mode: compress a contiguous conversation range into a high-fidelity summary
     "mode": "range",
     "permission": "allow",
     "showCompression": false,
-    // 摘要缓冲：压缩摘要 token 不计入 maxContextLimit，充分利用窗口
+    // Summary buffer: compressed-summary tokens don't count toward maxContextLimit, fully using the window
     "summaryBuffer": true,
 
-    // 上下文阈值（绝对 token 值，不用百分比）：
-    // DeepSeek V4 实际是 1M 上下文窗口（非 128K），若用百分比则 60%≈600K、
-    // 30%≈300K，普通会话（20K-200K）永远达不到，DCP 永不触发压缩。
-    // 改用绝对 token 值，恢复预期的 ~77K/38K 主动压缩，与模型窗口解耦。
+    // Context thresholds (absolute token values, not percentages):
+    // DeepSeek V4 actually has a 1M context window (not 128K); with percentages, 60%≈600K and
+    // 30%≈300K, which normal sessions (20K-200K) never reach, so DCP would never trigger compression.
+    // Use absolute token values instead to restore the intended ~77K/38K proactive compression, decoupled from the model window.
     "maxContextLimit": 77000,
     "minContextLimit": 38000,
 
-    // 每 3 次 LLM 请求提醒一次压缩（比默认 5 更频繁，适配 token 效率目标）
+    // Remind compression every 3 LLM requests (more frequent than default 5, tuned for token efficiency)
     "nudgeFrequency": 3,
-    // 从用户消息后第 12 条消息开始注入压缩提醒（比默认 15 更早）
+    // Inject compression reminders starting from the 12th message after a user message (earlier than default 15)
     "iterationNudgeThreshold": 12,
-    // 强力推：模型被明确要求优先考虑压缩
+    // Strong nudge: the model is explicitly asked to prioritize compression
     "nudgeForce": "strong",
 
-    // 压缩时保留以下工具的输出（避免关键信息丢失）
+    // Preserve the output of the following tools during compression (avoid losing critical info)
     "protectedTools": [
       "task",
       "skill",
@@ -76,16 +76,16 @@
       "todoread"
     ],
 
-    // <protect> 标签（关闭，我们暂无此使用模式）
+    // <protect> tags (off — we have no such usage pattern yet)
     "protectTags": false,
-    // 允许 DCP 压缩用户消息（如大型日志粘贴），关键于 DeepSeek V4 1M 窗口效率。
-    // 设为 true 时会永久保留所有用户消息——20K+ 日志粘贴将不可压缩。
+    // Allow DCP to compress user messages (e.g. large log pastes), key for DeepSeek V4 1M window efficiency.
+    // When set to true, all user messages are kept permanently — 20K+ log pastes become incompressible.
     "protectUserMessages": false
   },
 
-  // 自动裁剪策略
+  // Auto-pruning strategy
   "strategies": {
-    // 重复工具调用去重：相同 tool+args 只保留最新输出
+    // Duplicate tool-call dedup: same tool+args keeps only the latest output
     "deduplication": {
       "enabled": true,
       "protectedTools": [
@@ -95,7 +95,7 @@
         "todoread"
       ]
     },
-    // 错误工具输入裁剪：3 轮后移除错误工具调用的输入体（保留错误信息）
+    // Error tool-input pruning: after 3 turns, remove the input body of erroneous tool calls (keep the error message)
     "purgeErrors": {
       "enabled": true,
       "turns": 3,

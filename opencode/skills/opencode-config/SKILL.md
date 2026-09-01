@@ -17,7 +17,7 @@ this file only covers this repository's local conventions.
 
 ## Hard constraints
 - Only `deepseek/deepseek-v4-pro`, `deepseek/deepseek-v4-flash`, and the multimodal `deepseek/deepseek-v4-flash-vision-exp`. Never a fourth model; vision-exp is for visual input only, never a default.
-- Use the singular sst keys (`plugin`, `snapshot`), not the fork's plural (`plugins`, `snapshots`).
+- Use the singular keys (`plugin`, `snapshot`), not the fork's plural (`plugins`, `snapshots`).
 
 ## Config key shapes (authoritative)
 - **references** — alias → `{"repository" | "path", "branch"?, "description"?}`. `repository` takes a Git URL / host-path / `owner/repo` (+ `branch` to pin a ref); `path` takes relative / absolute / `~/`; `description` tells agents *when* to use it. String shorthand (`"alias": "../docs"`) allowed.
@@ -67,5 +67,5 @@ this file only covers this repository's local conventions.
 ## Before you finish
 1. Re-read every changed file end-to-end.
 2. Run `node scripts/validate-jsonc.js` to validate JSONC syntax (strips comments + trailing commas, parses as JSON).
-3. Keep `README.md` in sync — agent, skills, and command tables, repo-structure tree, iteration log.
+3. Keep `README.md` in sync — agent, skills, and command tables, repo-structure tree.
 4. Confirm no third model slipped in and no new dependency/plugin without justification.

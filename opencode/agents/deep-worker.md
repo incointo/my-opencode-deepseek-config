@@ -13,6 +13,12 @@ permission:
     remove-deadcode: "allow"
     spec-workflow: "allow"
     git-release: "allow"
+    to-tickets: "allow"
+    triage: "allow"
+    git-master: "allow"
+    resolving-merge-conflicts: "allow"
+    opencode-config: "allow"
+    writing-for-agents: "allow"
 ---
 
 # Deep Worker

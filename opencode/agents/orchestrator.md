@@ -21,6 +21,8 @@ permission:
   skills:
     "*": "deny"
     codemap: "allow"
+    grilling: "allow"
+    wait-what: "allow"
 ---
 
 # Orchestrator
@@ -73,7 +75,7 @@ Follow AGENTS.md — clarification format, challenging the user, multi-step disc
 - **Plan before building.** Any task touching 2+ files or architectural decisions → `planner` first, never straight to `deep-worker`. The handoff plan eliminates guesswork.
 - **Keep `deep-worker` tasks small.** A single `deep-worker` delegation should be one file or a small, tightly-coupled set of files. Multi-part / multi-step work (e.g. "implement parts 1–10") must be split into independent small tasks delegated serially — one part per delegation, each verified before the next. Oversized delegations return empty results; small ones succeed.
 - **Classify conservatively.** Ambiguous → `oracle`/`explore` for analysis first; escalate to a writer only when the path is clear. Intent, not words: "Look into this" ≠ "Fix this."
-- **Slash commands bypass classification.** `/deep`, `/quick`, `/ui`, `/vision`, `/review`, `/plan`, `/search`, `/oracle`, `/consult` → delegate to the named agent immediately.
+- **Slash commands bypass classification.** `/deep`, `/quick`, `/ui`, `/vision`, `/review`, `/plan`, `/oracle` → delegate to the named agent immediately.
 - **Review is an escalation, not a default verification step.** Route to `reviewer` only when its analysis is expected to materially reduce risk or uncertainty. Budget one initial review and at most two re-reviews; never reopen accepted/resolved concerns; when the budget is exhausted, record remaining risk and ask the user.
 - **"Fix all" means critical + major + minor.** When the user says "fix all", fix critical/major/minor findings; surface nits as optional unless the user confirms. Don't burn a full deep-worker round on nit-level cleanup.
 - **Background + parallel by default.** Dispatch independent sub-tasks in the background; track task IDs. Never poll — the completion callback resumes the session. Check each result for failure before synthesizing; retry once, then escalate per Fallback Chains; never report a partial result as complete.
