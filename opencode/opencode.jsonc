@@ -1,7 +1,7 @@
 {
     "$schema": "https://opencode.ai/config.json",
     "default_agent": "orchestrator",
-    "model": "volcengine-plan/deepseek-v4-pro",
+    "model": "volcengine-plan/glm-5.3-flash",
     "small_model": "volcengine-plan/deepseek-v4-flash",
     "autoupdate": "notify",
     "share": "disabled",
@@ -46,14 +46,19 @@
     "instructions": [
         "AGENTS.md"
     ],
-    // Volcengine Ark (volcengine-plan) model split. GLM-5.3-Flash covers the
-    // multimodal role that DeepSeek's vision-exp filled in the original config
-    // (verified live: GLM reads images via the read tool). The modalities
-    // block declares image input; without it OpenCode treats the model as
-    // text-only and rejects read_image calls. `options.thinking` is a provider
-    // passthrough — OpenCode forwards it verbatim. This provider is a
-    // subscription plan (volcengine-plan); per-token costs do not apply, so no
-    // `cost` map is declared.
+    // Volcengine Ark (volcengine-plan) model split. Two tiers, chosen by the
+    // user's subscription quota: glm-5.3-flash (0.25x multiplier, cheapest)
+    // carries the main conversation AND multimodal input (verified live: GLM
+    // reads images via the read tool); deepseek-v4-flash (0.5x) runs the
+    // utility/one-shot agents. The modalities block declares image input;
+    // without it OpenCode treats the model as text-only and rejects
+    // read_image calls. `options.thinking` is a provider passthrough —
+    // OpenCode forwards it verbatim. Verified live: dsv4-flash accepts
+    // thinking:disabled (reasoning=0); glm-5.3-flash REJECTS it with HTTP 400
+    // (thinking always on, ~150-200 reasoning tokens per call — accepted
+    // cost at the 0.25x tier), so no thinking option is declared for GLM.
+    // This provider is a subscription plan (volcengine-plan); per-token costs
+    // do not apply, so no `cost` map is declared.
     "provider": {
         "volcengine-plan": {
             "models": {
@@ -67,15 +72,6 @@
                     "modalities": {
                         "input": ["text", "image"],
                         "output": ["text"]
-                    },
-                    "options": {
-                        "temperature": 0,
-                        "thinking": { "type": "disabled" }
-                    }
-                },
-                "deepseek-v4-pro": {
-                    "options": {
-                        "thinking": { "type": "enabled" }
                     }
                 }
             }
@@ -93,11 +89,11 @@
         }
     },
     // Built-in utility agents (no .md file). Flash-first policy: build/plan/
-    // title/summary/compaction all run on flash. Thinking is controlled at the
-    // provider layer (flash = disabled, pro = default), so no per-agent variant
-    // or temperature here. Pro stays the global default; heavy work escalates
-    // to deep-worker (pro). `fallback` is not a real schema key — omitted;
-    // OpenCode falls back small_model -> model internally.
+    // title/summary/compaction all run on deepseek-v4-flash (thinking off,
+    // temperature 0). The main conversation rides glm-5.3-flash; heavy work
+    // escalates to deep-worker (also v4-flash — no pro tier in this setup).
+    // `fallback` is not a real schema key — omitted; OpenCode falls back
+    // small_model -> model internally.
     "agent": {
         "build": { "model": "volcengine-plan/deepseek-v4-flash" },
         "plan": { "model": "volcengine-plan/deepseek-v4-flash" },

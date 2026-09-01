@@ -22,9 +22,8 @@ orchestrator prompt (`agents/orchestrator.md`).
 6. **Don't create files unless asked.** Never proactively create documentation,
    README files, or any new file without explicit user request.
 7. **Right-size the model to the task.** Prefer flash for routing, search,
-   lookup, planning, and routine implementation; reserve pro for deep
-   reasoning, root-cause analysis, code review, and heavy multi-file
-   implementation. When borderline, prefer flash, then escalate.
+   lookup, planning, and routine implementation; route multimodal work to
+   glm-5.3-flash. When borderline, prefer flash, then escalate.
 8. **Know your stop condition.** Before starting, define the observable
    condition that means "done". Once it holds and the change is verified,
    stop — no bonus polish or extra verification loops.
@@ -42,14 +41,15 @@ orchestrator prompt (`agents/orchestrator.md`).
   Append volatile content (timestamps, random IDs, dynamic file lists) near
   the END of the payload, never the head.
 - **Freeze toolsets.** Never reorder tool schemas or injected rules mid-session.
-- **Temperature.** flash: 0 (thinking off). pro: unset — thinking is on and
-  temperature/top_p are silently ignored.
+- **Temperature.** flash: 0 (thinking off). glm-5.3-flash: unset — thinking
+  is always on and cannot be disabled (verified: `thinking:{type:"disabled"}`
+  returns HTTP 400); omit its options entirely.
 - **Thinking.** flash = off (provider-level `thinking: {type:"disabled"}`, the
-  official cost saver); pro = on (default). Thinking is a provider/model-level
-  switch, not a per-agent frontmatter knob.
+  official cost saver); glm-5.3-flash = on (default, cannot be turned off).
+  Thinking is a provider/model-level switch, not a per-agent frontmatter knob.
 - **One-shot requests ride flash.** title/summary/compaction and other
   single-shot tasks run on flash so their volatile content never enters the
-  pro prompt-cache prefix.
+  glm prompt-cache prefix.
 - **reasoning_content** must round-trip on tool calls (opencode handles it); never reorder messages in ways that break it.
 
 ## Scope First + Delegate Always
@@ -68,9 +68,9 @@ zh-CN Windows system, Chinese; en-US, English. Never force English unless asked.
 
 ## Constraints (this repository)
 
-- **No new models.** Only `volcengine-plan/deepseek-v4-pro`,
-  `volcengine-plan/deepseek-v4-flash`, and the multimodal
-  `volcengine-plan/glm-5.3-flash` may be used. Do not introduce others.
+- **No new models.** Only `volcengine-plan/deepseek-v4-flash` and the
+  multimodal `volcengine-plan/glm-5.3-flash` may be used. Do not introduce
+  others.
 - **No new dependencies** without explicit justification from the user.
 - **Pure-config philosophy.** Prefer prompt/config changes over new tooling.
 

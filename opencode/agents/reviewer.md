@@ -2,7 +2,7 @@
 name: reviewer
 description: Code reviewer (escalation, not a default step). Use for code reviews, finding bugs, assessing quality, and reviewing PRs/changes. Never modifies code.
 mode: subagent
-model: volcengine-plan/deepseek-v4-pro
+model: volcengine-plan/deepseek-v4-flash
 steps: 40
 color: "#27AE60"
 permission:

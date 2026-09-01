@@ -4,12 +4,12 @@
 
 > **来源声明**：本仓库是 [znlgis/my-opencode-deepseek-config](https://github.com/znlgis/my-opencode-deepseek-config) 的改编分支（fork）。基于原作者 v38 版本，将模型接入从 DeepSeek 官方 API 迁移至火山方舟（Volcengine Ark，`volcengine-plan` provider），多模态模型由 `deepseek-v4-flash-vision-exp` 替换为 `glm-5.3-flash`。原仓库与原作者 znlgis 保留其原始版权（MIT License）。
 
-**OpenCode × 火山方舟最优配置** —— 在 OpenCode 多 Agent 框架下，将方舟 DeepSeek V4 模型族（Pro + Flash）与 GLM-5.3-Flash（多模态）的能力发挥到极致的配置方案。核心理念：**Token 效率优先，用最小的上下文成本达到最好的开发效果**。
+**OpenCode × 火山方舟最优配置** —— 在 OpenCode 多 Agent 框架下，将方舟 DeepSeek V4 Flash 与 GLM-5.3-Flash（多模态）双模型的能力发挥到极致的配置方案。核心理念：**Token 效率优先，用最小的上下文成本达到最好的开发效果**。
 
 ## 当前配置概览
 
 - 默认主 Agent：`orchestrator`
-- 主模型：`volcengine-plan/deepseek-v4-pro`，轻量模型：`volcengine-plan/deepseek-v4-flash`，多模态模型：`volcengine-plan/glm-5.3-flash`
+- 主模型：`volcengine-plan/deepseek-v4-flash`，轻量模型：`volcengine-plan/deepseek-v4-flash`，多模态模型：`volcengine-plan/glm-5.3-flash`
 - 代理层级：`subagent_depth: 3`（支持 3 级代理嵌套）
 - 会话分享：关闭（`share: "disabled"`）
 - 权限基线：默认放行，破坏性 bash 命令设为 `ask`；`.env` 类敏感文件 `deny`；外部目录 `ask`；只读 Agent 的 bash 白名单（默认 deny 全部 + 仅放行只读子命令）
@@ -30,7 +30,7 @@
 ```bash
 opencode
 # 在 TUI 中输入: /connect → 选择 Volcengine Ark → 粘贴 API Key
-# 然后: /models → 选择 deepseek-v4-pro
+# 然后: /models → 选择 glm-5.3-flash（主对话）或 deepseek-v4-flash
 ```
 
 API Key 会自动持久化到 OpenCode 凭据存储。
@@ -49,12 +49,12 @@ opencode
 
 ```jsonc
 {
-  "model": "volcengine-plan/deepseek-v4-pro",
+  "model": "volcengine-plan/deepseek-v4-flash",
   "small_model": "volcengine-plan/deepseek-v4-flash"
 }
 ```
 
-本配置在 `provider` 层拆分 thinking：flash 关闭 thinking 并固定 `temperature: 0`（最快最省），pro 保持 thinking 开启。多模态 `glm-5.3-flash` 为 flash 档，沿用 flash 设置。示例（flash）：
+本配置在 `provider` 层拆分 thinking：flash 关闭 thinking 并固定 `temperature: 0`（最快最省）。多模态 `glm-5.3-flash` 的 thinking 常开且无法关闭（实测传 `thinking: disabled` 返回 HTTP 400），因此不在 options 中声明任何参数。示例（flash）：
 
 ```jsonc
 "provider": {
@@ -81,7 +81,7 @@ opencode
 }
 ```
 
-> **模型 ID 命名规则**：`provider_id/model_id`，即 `volcengine-plan/deepseek-v4-pro`、`volcengine-plan/deepseek-v4-flash` 和 `volcengine-plan/glm-5.3-flash`。
+> **模型 ID 命名规则**：`provider_id/model_id`，即 `volcengine-plan/deepseek-v4-flash`、`volcengine-plan/deepseek-v4-flash` 和 `volcengine-plan/glm-5.3-flash`。
 
 ## 安装部署
 
@@ -132,7 +132,7 @@ ln -s /path/to/my-opencode-deepseek-config/opencode ~/.config/opencode
 ### 验证安装
 
 启动 OpenCode 确认：
-1. `/models` → 当前模型为 `volcengine-plan/deepseek-v4-pro`
+1. `/models` → 当前模型为 `volcengine-plan/deepseek-v4-flash`
 2. Agent 列表应能看到 `orchestrator`、`planner`、`deep-worker` 等 11 个 Agent
 3. 输入任意请求，Orchestrator 自动分析意图并路由
 
@@ -156,7 +156,7 @@ ln -s /path/to/my-opencode-deepseek-config/opencode ~/.config/opencode
 
 | 模型 | 用途 |
 | --- | --- |
-| `volcengine-plan/deepseek-v4-pro` | 深度推理、根因分析、代码审查、重型多文件实现 |
+| `volcengine-plan/deepseek-v4-flash` | 深度推理、根因分析、代码审查、重型多文件实现 |
 | `volcengine-plan/deepseek-v4-flash` | 编排/路由、规划、常规实现、咨询、UI、探索、外部检索、轻量编辑、标题/摘要/压缩 |
 | `volcengine-plan/glm-5.3-flash` | 多模态：图像/截图/图表/UI 稿的理解与描述 |
 
@@ -164,8 +164,8 @@ ln -s /path/to/my-opencode-deepseek-config/opencode ~/.config/opencode
 
 - **Flash 优先**：路由、搜索、规划、常规实现、咨询、UI、探索等明确定义的任务优先走 flash agent
 - **Vision 专责多模态**：检测到图像/截图/图表等视觉输入时，路由到 `vision` agent（GLM-5.3-Flash 多模态模型）
-- **Pro 专注推理**：深度推理、根因分析、代码审查、重型多文件实现——只用 pro
-- **自动升级**：flash agent 无法胜任时自动升级到 pro（带完整上下文）
+- **重型任务走专职 agent**：深度推理、根因分析、代码审查、重型多文件实现——路由到 `oracle`/`reviewer`/`deep-worker`（同为 flash 模型，但提示词与权限分工更重）
+- **自动升级**：flash agent 无法胜任时自动升级到重型 agent（带完整上下文）
 
 ## Agent 结构
 
@@ -180,9 +180,9 @@ ln -s /path/to/my-opencode-deepseek-config/opencode ~/.config/opencode
 | Agent | 模型 | 权限 | 作用 |
 | --- | --- | --- | --- |
 | `planner` | v4-flash | 读写 | 规划、架构、拆解任务 |
-| `deep-worker` | v4-pro | 读写 | 重型实现、多文件改动、复杂调试 |
-| `oracle` | v4-pro | **只读** | 根因分析、深度理解代码 |
-| `reviewer` | v4-pro | **只读** | 单遍代码审查（证据门控） |
+| `deep-worker` | v4-flash | 读写 | 重型实现、多文件改动、复杂调试 |
+| `oracle` | v4-flash | **只读** | 根因分析、深度理解代码 |
+| `reviewer` | v4-flash | **只读** | 单遍代码审查（证据门控） |
 | `ui-builder` | v4-flash | 读写 | 前端与 UI 相关任务 |
 | `consultant` | v4-flash | 读写 | 方案讨论、最佳实践建议 |
 | `explore` | v4-flash | **只读** | 代码库搜索、并行探索 |
@@ -324,11 +324,11 @@ OpenCode 通过原生 `skill` 工具按需暴露技能——Agent 只在需要�
 ## 设计哲学
 
 - **纯配置驱动，零额外依赖** —— 所有能力由 `opencode.jsonc` + `agents/*.md` + `skills/*/SKILL.md` + `AGENTS.md` 实现
-- **方舟模型族极致利用** —— Pro 做深度推理与重型实现，Flash 做路由、规划与常规执行，GLM-5.3-Flash 专责多模态
+- **双模型极致利用** —— Flash 做路由、规划、常规实现与重型分工（oracle/reviewer/deep-worker 同模型不同提示词），GLM-5.3-Flash 专责多模态与主对话
 - **Token 效率优先** —— 路径引用替代粘贴文件、技能按需加载、压缩分级管理
 - **插件增效但不喧宾夺主** —— superpowers 提供过程纪律，DCP（dcp.jsonc）主动去重+压缩阈值，内置 compaction（opencode.jsonc）自动触发+prune 兜底；两插件均固定版本（pin）以保字节稳定前缀，避免自动更新导致前缀漂移
 - **执行与探索分离** —— deep-worker/light-orchestrator 禁止研究/委托，explore/librarian 禁止修改
-- **缓存与 thinking 纪律** —— 静态前缀稳定以命中方舟提示词缓存；flash 关 thinking + temperature 0（provider 层），pro 默认 thinking 开
+- **缓存与 thinking 纪律** —— 静态前缀稳定以命中方舟提示词缓存；flash 关 thinking + temperature 0（provider 层），glm-5.3-flash thinking 常开（无法关闭，实测 400）
 - **Scope First + Delegate Always** —— 先定范围（2+ 步/多文件/架构变更先走 planner），再委派执行，顶层 token 只留给路由与难题
 - **原子 TODO** —— 多步任务先写有序 TODO，逐条 in_progress→completed；格式 `path: action for scenario — verify by check`
 - **持续改进** —— reflect 机制化发现摩擦、code-review 证据门控保证质量

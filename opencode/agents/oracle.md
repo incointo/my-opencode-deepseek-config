@@ -2,7 +2,7 @@
 name: oracle
 description: Deep code analyst and debugger. Use for root cause analysis, understanding complex code, reading and interpreting diffs, tracing bugs, and deep comprehension tasks. Avoid for simple lookups or first-attempt fixes.
 mode: subagent
-model: volcengine-plan/deepseek-v4-pro
+model: volcengine-plan/deepseek-v4-flash
 steps: 40
 color: "#F39C12"
 permission:

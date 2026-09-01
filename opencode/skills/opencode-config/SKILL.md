@@ -16,7 +16,7 @@ this file only covers this repository's local conventions.
 | `skills/<name>/SKILL.md` | On-demand skills, auto-discovered from the config dir |
 
 ## Hard constraints
-- Only `volcengine-plan/deepseek-v4-pro`, `volcengine-plan/deepseek-v4-flash`, and the multimodal `volcengine-plan/glm-5.3-flash`. Never a fourth model; glm-5.3-flash is for visual input only, never a default.
+- Only `volcengine-plan/deepseek-v4-flash`, `volcengine-plan/deepseek-v4-flash`, and the multimodal `volcengine-plan/glm-5.3-flash`. Never a fourth model; glm-5.3-flash is for visual input only, never a default.
 - Use the singular keys (`plugin`, `snapshot`), not the fork's plural (`plugins`, `snapshots`).
 
 ## Config key shapes (authoritative)
@@ -32,13 +32,13 @@ this file only covers this repository's local conventions.
 | `name` | kebab-case, matches filename |
 | `description` | When to use this agent (drives routing + @-menu) |
 | `mode` | `primary` \| `subagent` |
-| `model` | `volcengine-plan/deepseek-v4-pro` \| `volcengine-plan/deepseek-v4-flash` \| `volcengine-plan/glm-5.3-flash` (visual only) |
+| `model` | `volcengine-plan/deepseek-v4-flash` \| `volcengine-plan/deepseek-v4-flash` \| `volcengine-plan/glm-5.3-flash` (visual only) |
 | `steps` | step budget; heavier agents get more |
 | `color` | "#RRGGBB" |
 | `hidden` | optional: hide from @-menu |
 | `permission` | optional tool locks; read-only agents (`oracle`, `reviewer`, `explore`, `librarian`) must set `edit: deny` + read-only bash whitelist |
 
-- Each prompt references `AGENTS.md` (not restating it) plus a short Model Leverage (pro) / Model Awareness (flash) note.
+- Each prompt references `AGENTS.md` (not restating it) plus a short Model Leverage (heavy) / Model Awareness (flash) note.
 
 ## Skill file format (`skills/<name>/SKILL.md`)
 - One folder per skill; file must be `SKILL.md` (uppercase).

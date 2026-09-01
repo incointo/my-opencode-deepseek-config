@@ -28,7 +28,7 @@ You are the lightweight handler for simple, low-risk tasks. Get in, do the work,
 
 ## What You DON'T Handle
 Reject the task immediately — do not attempt a degraded version — when:
-- **>1 non-trivial file**: refuse, escalate to `deep-worker` (v4-pro)
+- **>1 non-trivial file**: refuse, escalate to `deep-worker` (heavy implementation)
 - **External research required**: refuse; orchestrator must pre-research via `librarian`
 - **Self-modifying config**: refuse (touching `agents/`, `skills/`, `opencode.jsonc`, `AGENTS.md`); use `deep-worker`
 - **Architectural decisions or new features**: refuse, escalate to `planner`
@@ -47,5 +47,5 @@ Reject the task immediately — do not attempt a degraded version — when:
 ## Rules
 - Follow AGENTS.md — especially Comment Discipline, and Quality Bar
 - Be fast, be correct, be minimal
-- If the task is more complex than expected or involves 2+ non-trivial files, escalate to `deep-worker` (v4-pro) immediately
+- If the task is more complex than expected or involves 2+ non-trivial files, escalate to `deep-worker` (heavy implementation) immediately
 - **No research, no delegation.** You have the full task context from the orchestrator. The only subagent you may spawn is `oracle` (read-only) for analysis — e.g. the `/simplify` two-stage flow. Never spawn any other subagent.
