@@ -206,7 +206,7 @@ ln -s /path/to/my-opencode-deepseek-config/opencode ~/.config/opencode
 | --- | --- | --- |
 | `/codemap` | `explore`（codemap） | 生成仓库结构图 |
 | `/learn` | `light-orchestrator` | 把会话中的非显然经验沉淀到目录级 AGENTS.md（根/包/特性级） |
-| `/simplify` | `oracle`（simplify）→ `light-orchestrator` | oracle 分析 → light-orchestrator 应用简化 |
+| `/simplify` | `light-orchestrator`（simplify）→ spawn `oracle` | spawn oracle 只读分析 → light-orchestrator 应用编辑 |
 | `/rmslop` | `deep-worker`（remove-deadcode） | 清理死代码和 AI slop |
 
 ### 规约命令
@@ -253,25 +253,24 @@ OpenCode 通过原生 `skill` 工具按需暴露技能——Agent 只在需要�
 
 > **借鉴而非照搬**：过重的流水线只汲取轻量化设计理念；冗余功能由现有 agents/skills 覆盖，不新增。遵循"精简优先于新增"原则，每次迭代都以净减 token 为目标。
 >
-> **本轮（v35）机制来源**：`/learn` 命令（目录级 AGENTS.md 经验沉淀）、`references` 挂载 deepseek-harness（官方模型配置指引）、orchestrator `permission.task` 白名单（`"*":"deny"` + 10 子代理 allow）、gh-cli 版本对齐 v2.98、opencode-config 三模型约束、dcp.jsonc 1M 窗口修正——均借鉴 [anomalyco/opencode](https://github.com/anomalyco/opencode) 与 [deepseek-ai/deepseek-harness](https://github.com/deepseek-ai/deepseek-harness)。
+> **本轮（v37）机制来源**：`/learn` 命令（目录级 AGENTS.md 经验沉淀）、`references` 挂载 deepseek-harness（官方模型配置指引）、orchestrator `permission.task` 白名单（`"*":"deny"` + 10 子代理 allow）、gh-cli 版本对齐 v2.98、opencode-config 三模型约束、dcp.jsonc 1M 窗口修正——均借鉴 [anomalyco/opencode](https://github.com/anomalyco/opencode) 与 [deepseek-ai/deepseek-harness](https://github.com/deepseek-ai/deepseek-harness)。
 >
 > **评估后未采用**：mattpocock 的 issue-tracker 工作流（to-spec/to-tickets/triage/implement）过重；omo 的分类路由与按模型族定制提示词，对 3 模型纯配置而言过度设计；diagnosing-bugs 与 superpowers 的 systematic-debugging 重叠，未新增；superpowers 无配置旋钮，保持插件字符串形式注入；opencode@dev 的 effect/rtl-aware-development 技能与 triage/duplicate-pr agent 为仓库专属，需专用 GitHub 工具，未引入。
 
 ### 迭代里程碑
 
-自 v1 以来历经 34 次迭代，持续对标上游仓库最佳实践：
+自 v1 以来历经 37 次迭代，持续对标上游仓库最佳实践：
 
-> **展示规则**：仅保留最新 5 个版本（v31-v35）的独立更新说明；更早版本按每 10 个版本合并为一条描述（v1-v10、v11-v20、v21-v30）。每次新增版本时，将最旧的独立版本并入其对应的 10 版本区间，保持此结构。
+> **展示规则**：仅保留最新 5 个版本（v33-v37）的独立更新说明；更早版本按每 10 个版本合并为一条描述（v1-v10、v11-v20、v21-v32）。每次新增版本时，将最旧的独立版本并入其对应的 10 版本区间，保持此结构。
 
 - **v1-v10（奠基 + 审查/规约/契约）**：双模型绑定、Agent 角色体系、意图门控路由、AGENTS.md 全局规则、Skills 目录、权限基线；code-review 双轴校准、spec-workflow、gh-cli 对齐、拒绝契约、后台核查
 - **v11-v20（持续瘦身）**：命令 29→18（-38%）、AGENTS.md 290→211（-27%）、逐句 no-op 修剪、Schema 校验去死键
-- **v21-v30（对齐 + 安全 + 纪律重构）**：整合 6 个上游仓库、gh-cli v2.97 转义注入安全章节、DCP 窗口调优；prune/DCP 百分比阈值收紧、grilling 引入、code-review 单遍化 + 证据门控、provider 层 thinking 拆分、缓存纪律、scope-first + 委派优先、原子 TODO、5 新技能至 24 个、README 双语同步
-- **v31（多模态）**：新增 `deepseek-v4-flash-vision-exp` 多模态模型（provider 层沿用 flash 设置）；新增 `vision` agent 与 `/vision` 命令；orchestrator 路由表增多模态行；AGENTS.md 模型约束更新为三模型
-- **v32（会话复盘优化）**：基于三份真实会话日志（flash 配置/审查 + pro CAD）复盘。P0 子代理空结果降级（重试 1 次→停止告知用户，绝不内联硬扛重型实现）；P1 orchestrator 上下文卫生（不亲自探索/不加载领域 skill/子代理结果压缩转发/已验证事实传播/重审前核对覆盖）；P1 路由表补全（规模评估→explore、commit/push→/commit）；P2 opencode-config 技能修正（模型白名单引用 AGENTS.md、配置目录指针、read 工具防乱码、内置 validate-jsonc.js 校验器、新 agent 按角色分类）；P2 code-review 增全项目审查模式；P2 Git 安全禁目录级 `git add`
+- **v21-v32（对齐 + 安全 + 纪律重构 + 会话复盘）**：整合 6 个上游仓库、gh-cli v2.97 转义注入安全章节、DCP 窗口调优；prune/DCP 百分比阈值收紧、grilling 引入、code-review 单遍化 + 证据门控、provider 层 thinking 拆分、缓存纪律、scope-first + 委派优先、原子 TODO、5 新技能至 24 个、README 双语同步；v31 新增多模态模型 vision-exp、vision agent 与 /vision 命令；v32 会话复盘优化（P0 子代理空结果降级、P1 orchestrator 上下文卫生+路由表补全、P2 技能修正+全项目审查+Git 安全禁目录级 add）
 - **v33（质量完善）**：修复 opencode.jsonc 尾随逗号；新增 .gitignore；增强 research 技能（18→78 行）；修正 orchestrator 路由表三处不一致（refactor 路由 oracle→deep-worker、simplify 路由明确 light-orchestrator、deploy/release 对齐 /release 命令）；spec-workflow 格式修补；opencode-config 技能增补 validate-jsonc.js 引用；simplify 命令模板明确 writer agent；新增 scripts/validate-jsonc.js 字符串感知校验器
 - **v34（定向瘦身 + 高价值借鉴）**：handoff 增 pi 结构化标题（Goal / Constraints & Preferences / Progress / Key Decisions / Next Steps / Critical Context）；shared-language 增"术语表即一切"与 ADR 分流规则（mattpocock）；gh-cli 增次级限流检测；opencode.jsonc thinking 注释修正为 provider 透传说明；README 修正快照（snapshot）过期声明、命令数核实为 19 条无误；核实两轴审查/delta specs/缓存纪律等上游理念已落地，未新增技能
 - **v35（借鉴 opencode@dev + 版本对齐）**：新增 `/learn` 命令（目录级 AGENTS.md 经验沉淀，借鉴 opencode@dev learn.md）；新增 `deepseek-harness` references 挂载（官方模型配置指引）；orchestrator 增 `permission.task` 白名单（`"*":"deny"` + 10 子代理 allow，借鉴 opencode@dev 单工具 agent 模式）；gh-cli 技能版本 v2.97→v2.98 对齐；opencode-config 技能模型约束更新为三模型（含 vision-exp）；dcp.jsonc 修正 128K→1M 窗口注释；命令数 19→20
 - **v36（对标 5 仓库 + 插件固定版本）**：综合 oh-my-openagent / OpenSpec / oh-my-opencode-slim / pi / deepseek-harness 五仓库调研，确认多数省钱与轻量审查理念已内化（thinking 拆分、字节稳定前缀、tool 裁剪、compaction 双层、findings 分级+证据、verdict 聚合、反模式表、review 不与编辑并行），仅补增量：AGENTS.md 增循环检测（连续 3+ 次相同工具调用视为空转，防 token 空转，借鉴 deepseek-harness repeat-tool-reminder）；code-review 增 2 条显式反模式（串行 spawn→CRITICAL、不读文件下结论→HIGH）；gh-cli 增 v2.98+ 命令（`--search-type semantic`、issue 类型/子 issue/关系、`--attach` 附件、`gh repo read-file/read-dir`、`gh skill publish`、`GH_FORCE_TTY`）；插件固定版本（superpowers `#v6.3.0`、DCP `@3.1.15`、`autoUpdate:false`）以保字节稳定前缀；README 结构图 dcp.jsonc 注释修正为绝对 token 阈值 77K/38K
+- **v37（三方审计修复）**：修复 validate-jsonc.js 尾随逗号正则（数组尾随逗号误报 INVALID）；opencode.jsonc DCP 注释对齐绝对阈值 77K/38K；/simplify 命令改为 light-orchestrator 两段式（spawn oracle 只读分析 → 应用编辑）；五个 writer agent 硬化禁止委托（permission.task deny）+ light-orchestrator 窄授权（仅 oracle allow）；dcp.jsonc 移除未 pin 的 master $schema（插件 3.1.15 无稳定 tag schema，键名已核验）；AGENTS.md 循环检测规则译为英文并移至反模式节；orchestrator.md 三处逐字重复压缩为指针引用；核验 superpowers 插件无 prototype 同名技能，仓库副本非重复，保留；README 迭代计数 34→37、展示区间 v31-v35→v33-v37、v31/v32 并入折叠组（v21-v32）；删除重复的 /oracle 映射行
 
 ## 仓库结构
 
@@ -349,7 +348,6 @@ OpenCode 通过原生 `skill` 工具按需暴露技能——Agent 只在需要�
 | 前端 / UI 工作 | `/ui` |
 | 多模态 / 图像理解 | `/vision` |
 | 方案讨论 / 对比取舍 | `/consult` |
-| 结构化调试 | `/oracle` |
 
 ### 典型工作流
 

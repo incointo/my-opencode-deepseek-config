@@ -109,9 +109,10 @@
         "max_lines": 800,
         "max_bytes": 20480
     },
-    // DCP compresses proactively at its 60% threshold (see dcp.jsonc); native
-    // auto compaction is the near-overflow fallback. prune:true drops stale tool
-    // outputs, so the two layers complement rather than overlap.
+    // DCP compresses proactively at its absolute 77K/38K thresholds (see
+    // dcp.jsonc); native auto compaction is the near-overflow fallback.
+    // prune:true drops stale tool outputs, so the two layers complement rather
+    // than overlap.
     "compaction": {
         "auto": true,
         "prune": true,
@@ -222,8 +223,8 @@
         },
         "simplify": {
             "description": "Simplify code without changing behavior — reduce nesting, remove unnecessary abstraction, cut dead variables",
-            "agent": "oracle",
-            "template": "Load the simplify skill. Read the target file(s) and apply simplification patterns (early returns, inline single-use variables, remove single-caller functions, simplify conditionals). Produce a detailed report: for each simplification, provide the exact oldString to replace and newString to use. The light-orchestrator agent will then apply these edits while you verify each change preserves behavior. Do not modify files yourself — output the simplification plan only."
+            "agent": "light-orchestrator",
+            "template": "Load the simplify skill. Two-stage flow: (1) spawn the oracle subagent (read-only) to analyze the target file(s) and produce a simplification plan — for each simplification, the exact oldString to replace and newString to use; (2) apply those edits yourself, then verify each change preserves behavior (run tests / re-read). Oracle never edits; you never analyze. If oracle finds no valid simplifications, report that and stop."
         }
     }
 }

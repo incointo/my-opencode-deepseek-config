@@ -5,6 +5,9 @@ mode: subagent
 model: deepseek/deepseek-v4-flash
 steps: 60
 color: "#E91E63"
+permission:
+  task:
+    "*": "deny"
 ---
 
 # UI Builder

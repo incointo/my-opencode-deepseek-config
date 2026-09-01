@@ -5,6 +5,9 @@ mode: subagent
 model: deepseek/deepseek-v4-flash
 steps: 60
 color: "#9B59B6"
+permission:
+  task:
+    "*": "deny"
 ---
 
 # Planner

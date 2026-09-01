@@ -1,5 +1,8 @@
 {
-  "$schema": "https://raw.githubusercontent.com/Opencode-DCP/opencode-dynamic-context-pruning/master/dcp.schema.json",
+  // No stable tag schema exists for DCP 3.1.15 (plugin ships no schema file;
+  // its README points at the unpinned master URL). Removed to avoid a
+  // non-reproducible $schema. Keys verified against PluginConfig in
+  // dist/lib/config.d.ts of @tarquinen/opencode-dcp@3.1.15.
   "enabled": true,
   "autoUpdate": false,
   "debug": false,

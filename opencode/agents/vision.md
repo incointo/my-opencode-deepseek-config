@@ -6,7 +6,8 @@ model: deepseek/deepseek-v4-flash-vision-exp
 steps: 25
 color: "#9B59B6"
 permission:
-  task: deny
+  task:
+    "*": "deny"
   bash:
     "*": deny
     "git status*": allow

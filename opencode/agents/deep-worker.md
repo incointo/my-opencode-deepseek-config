@@ -5,6 +5,9 @@ mode: subagent
 model: deepseek/deepseek-v4-pro
 steps: 100
 color: "#E24A4A"
+permission:
+  task:
+    "*": "deny"
 ---
 
 # Deep Worker

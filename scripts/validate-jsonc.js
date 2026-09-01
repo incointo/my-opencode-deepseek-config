@@ -84,7 +84,7 @@ function stripJsonc(source) {
 
   let result = out.join('');
   // Remove trailing commas before ] or }
-  result = result.replace(/,(s*[}\]])/g, '$1');
+  result = result.replace(/,\s*(\}|\])/g, '$1');
   return result;
 }
 

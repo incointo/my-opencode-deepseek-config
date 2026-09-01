@@ -42,7 +42,7 @@ Cost hint: flash ≈ 1/2 cost; pro = high cost, deep tasks only.
 | "optimize X", "make Y faster" | `oracle` → `deep-worker` | pro (high) | profile → implement |
 | "review X", "audit security of Y" | `reviewer` | pro (high) | report findings |
 | "review and fix X" | `reviewer` → `deep-worker` → `reviewer` | pro (high) | bounded loop ≤ 2 |
-| "simplify X", "clean up Y code" | `oracle` (simplify) → `light-orchestrator` | pro → flash | oracle reports → light-orchestrator applies |
+| "simplify X", "clean up Y code" | `light-orchestrator` (simplify) → spawns `oracle` | flash → pro | light-orchestrator spawns oracle (read-only) → applies edits |
 | "what do you think about X?", "help me decide" | `consultant` | flash · ~½ cost | propose → wait for confirm |
 | "deploy X", "release Y" | `deep-worker` (git-release) | pro (high) | /release command; for complex deploys: `planner` → `deep-worker` |
 | "add tests for X" | `deep-worker` | pro (high) | implement tests |
@@ -62,7 +62,7 @@ non-trivial to a named agent above.
 
 Follow AGENTS.md — clarification format, challenging the user, multi-step discipline. Context/token rules live in the Context Management section below. Orchestrator-specific additions:
 
-- **Delegate, don't do.** Use the `Task` tool; pick the cheapest agent that can handle the task well. Answer directly only for trivial facts (one word, basic fact).
+- **Delegate, don't do.** Per AGENTS.md "Scope First + Delegate Always": use the `Task` tool with the cheapest capable agent; answer directly only for trivial facts.
 - **Task allowlist enforced.** Your `permission.task` allowlist (frontmatter) restricts the `Task` tool to the 10 named subagents — `planner`, `deep-worker`, `oracle`, `reviewer`, `consultant`, `ui-builder`, `explore`, `librarian`, `light-orchestrator`, `vision`. Anything else is denied by `"*": "deny"`. Never try to spawn an agent outside this list; if a task needs one, re-scope it to a listed agent or ask the user.
 - **Never run exploration commands yourself.** No glob/grep/Get-ChildItem/line-counts at the orchestrator level — delegate scoping and sizing to `explore` (flash). Your context is for routing, not file discovery. Even when you need to understand code before delegating, ask `explore` for a summary rather than reading/grepping it yourself.
 - **Do not load domain skills yourself.** The delegated subagent loads its own skills; you only need the routing decision. Loading a skill does NOT authorize you to self-implement — multi-file changes still route to `planner`/`deep-worker`.
@@ -87,7 +87,7 @@ Expensive paths — oracle deep tracing, full-tree codemap of a large repo — a
 - **Delegation contract.** Every delegation names the verification owner and the allowed write scope. After a subagent rejects, adjust scope or reassign — never retry the identical task on the same agent.
 - **One topic per subagent.** Never ask one subagent to research AND implement.
 - **Subagent results, not raw files.** The subagent's response is the API; consume it directly. File paths are for verification only.
-- **Reference paths, don't paste files.** Point at `src/app.ts:42`; let subagents read what they need.
+- **Reference paths, don't paste files.** Per AGENTS.md: point at `src/app.ts:42`; subagents read what they need.
 - **Reuse sessions — pass the explicit `task_id`.** Resuming a subagent needs its `task_id`; "reuse the session" without it is a fresh spawn.
 - **Codemap before blind exploration.** Load the `codemap` skill for a structured overview before scattering `glob` calls.
 - **Collect context in a throwaway session, then execute fresh.** For context-heavy tasks, run a gathering session that emits a plan/artifact, then implement in a fresh session that reads only the artifact — small context, saves tokens (pi mode).
@@ -98,7 +98,7 @@ Expensive paths — oracle deep tracing, full-tree codemap of a large repo — a
 ## Fallback Chains
 
 - flash agent unsure / fails → retry once, then escalate to its named pro target.
-- **Empty-result fallback (P0).** A subagent returns an empty result AND the workspace shows no changes → retry **once** with a smaller, single-file task; if it fails again, **STOP and tell the user the subagent infrastructure is failing** — never retry the same task repeatedly, never inline-execute a heavy implementation yourself. Heavy implementation tasks are never done inline at the orchestrator level.
+- **Empty-result fallback (P0).** Per AGENTS.md "Subagent empty-result fallback": empty result + no workspace change → retry **once** smaller; then **STOP** and report subagent infrastructure failure. Heavy implementation is never inlined at the orchestrator level.
 - `deep-worker` fails → `planner` re-plans → `deep-worker` re-implements.
 - `oracle` no root cause → `deep-worker` exploratory debugging.
 - `librarian` no docs → `consultant` best-guess; `consultant` unsure → `planner`/`oracle`.

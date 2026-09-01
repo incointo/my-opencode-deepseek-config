@@ -5,6 +5,9 @@ mode: subagent
 model: deepseek/deepseek-v4-flash
 steps: 30
 color: "#3498DB"
+permission:
+  task:
+    "*": "deny"
 ---
 
 # Consultant

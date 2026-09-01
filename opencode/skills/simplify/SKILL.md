@@ -1,6 +1,6 @@
 ---
 name: simplify
-description: Behavior-preserving code simplification — reduce complexity without changing what the code does. Use when the task mentions "simplify", "reduce complexity", "too clever", "hard to read", "reduce nesting", or after a feature lands and the code needs polishing. Assigned to the oracle agent for deep analysis before editing.
+description: Behavior-preserving code simplification — reduce complexity without changing what the code does. Use when the task mentions "simplify", "reduce complexity", "too clever", "hard to read", "reduce nesting", or after a feature lands and the code needs polishing. Oracle analyzes (read-only), light-orchestrator applies the edits.
 ---
 
 # Simplify
