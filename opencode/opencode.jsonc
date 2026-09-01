@@ -1,8 +1,8 @@
 {
     "$schema": "https://opencode.ai/config.json",
     "default_agent": "orchestrator",
-    "model": "deepseek/deepseek-v4-pro",
-    "small_model": "deepseek/deepseek-v4-flash",
+    "model": "volcengine-plan/deepseek-v4-pro",
+    "small_model": "volcengine-plan/deepseek-v4-flash",
     "autoupdate": "notify",
     "share": "disabled",
     "lsp": true,
@@ -46,54 +46,27 @@
     "instructions": [
         "AGENTS.md"
     ],
-    // DeepSeek thinking split (deepseek-harness official): flash disables
-    // thinking for cheapest+fastest runs; pro keeps the default (thinking on).
-    // The vision-exp model is a flash-tier multimodal variant — same cost
-    // profile, so it mirrors flash (thinking off, temperature 0). The
-    // modalities block declares image input support; without it OpenCode
-    // treats the model as text-only and rejects read_image calls.
-    // `options.thinking` is a provider passthrough, not a native schema field:
-    // OpenCode forwards it verbatim to the DeepSeek API (OpenAI-format thinking
-    // toggle — {"type":"enabled"|"disabled"}).
+    // Volcengine Ark (volcengine-plan) model split. GLM-5.3-Flash covers the
+    // multimodal role that DeepSeek's vision-exp filled in the original config
+    // (verified live: GLM reads images via the read tool). The modalities
+    // block declares image input; without it OpenCode treats the model as
+    // text-only and rejects read_image calls. `options.thinking` is a provider
+    // passthrough — OpenCode forwards it verbatim. This provider is a
+    // subscription plan (volcengine-plan); per-token costs do not apply, so no
+    // `cost` map is declared.
     "provider": {
-        "deepseek": {
-            // DeepSeek's OpenAI-compatible gateway has two pitfalls: reasoning
-            // models reject a system prompt sent as role:"developer", and an
-            // output limit sent as max_completion_tokens is also rejected.
-            // These compat flags make OpenCode fall back to role:"system" and
-            // the max_tokens field instead.
-            "compat": {
-                "supportsDeveloperRole": false,
-                "maxTokensField": "max_tokens"
-            },
-            // `cost` is USD per 1M tokens, off-peak rates effective with the
-            // 2026-08-16 peak/off-peak pricing; peak hours charge double these
-            // values. DeepSeek publishes no standalone cache-write price —
-            // cache writes bill at the cache-miss input rate, so cache_write
-            // is mapped from input.
+        "volcengine-plan": {
             "models": {
                 "deepseek-v4-flash": {
-                    "cost": {
-                        "input": 0.22,
-                        "output": 0.66,
-                        "cache_read": 0.007,
-                        "cache_write": 0.22
-                    },
                     "options": {
                         "temperature": 0,
                         "thinking": { "type": "disabled" }
                     }
                 },
-                "deepseek-v4-flash-vision-exp": {
+                "glm-5.3-flash": {
                     "modalities": {
                         "input": ["text", "image"],
                         "output": ["text"]
-                    },
-                    "cost": {
-                        "input": 0.22,
-                        "output": 0.66,
-                        "cache_read": 0.007,
-                        "cache_write": 0.22
                     },
                     "options": {
                         "temperature": 0,
@@ -101,11 +74,8 @@
                     }
                 },
                 "deepseek-v4-pro": {
-                    "cost": {
-                        "input": 0.66,
-                        "output": 1.98,
-                        "cache_read": 0.022,
-                        "cache_write": 0.66
+                    "options": {
+                        "thinking": { "type": "enabled" }
                     }
                 }
             }
@@ -117,9 +87,9 @@
             "branch": "dev",
             "description": "Official opencode docs, schema, and configuration examples"
         },
-        "deepseek-harness": {
-            "repository": "deepseek-ai/deepseek-harness",
-            "description": "Official DeepSeek model config guidance: thinking toggle, temperature, prompt-caching, context-window handling, OpenAI-compatible API setup"
+        "volcengine-ark-docs": {
+            "repository": "volcengine/volcengine-sdk-docs",
+            "description": "Volcengine Ark docs: OpenAI-compatible API setup, thinking toggle, context caching, model catalog"
         }
     },
     // Built-in utility agents (no .md file). Flash-first policy: build/plan/
@@ -129,11 +99,11 @@
     // to deep-worker (pro). `fallback` is not a real schema key — omitted;
     // OpenCode falls back small_model -> model internally.
     "agent": {
-        "build": { "model": "deepseek/deepseek-v4-flash" },
-        "plan": { "model": "deepseek/deepseek-v4-flash" },
-        "title": { "model": "deepseek/deepseek-v4-flash" },
-        "summary": { "model": "deepseek/deepseek-v4-flash" },
-        "compaction": { "model": "deepseek/deepseek-v4-flash" }
+        "build": { "model": "volcengine-plan/deepseek-v4-flash" },
+        "plan": { "model": "volcengine-plan/deepseek-v4-flash" },
+        "title": { "model": "volcengine-plan/deepseek-v4-flash" },
+        "summary": { "model": "volcengine-plan/deepseek-v4-flash" },
+        "compaction": { "model": "volcengine-plan/deepseek-v4-flash" }
     },
     // Trim only oversized tool outputs (full text still saved to disk, preview
     // returned). 800 lines / 20KB balances token savings against re-reads:

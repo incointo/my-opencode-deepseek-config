@@ -42,7 +42,7 @@
   ],
 
   // ══════════════════════════════════════════════════════════════
-  // Compression strategy — tuned for DeepSeek V4 (1M context window)
+  // Compression strategy — tuned for Volcengine Ark (deepseek-v4 1M / glm 256K windows)
   // Core principle: proactive compression > passive overflow; DCP compresses proactively at the 77K threshold, native auto compaction is the near-overflow fallback — the two complement each other
   // Division of labor: built-in compaction handles auto-trigger + prune (opencode.jsonc); DCP handles proactive dedup + compression thresholds. The two complement each other.
   // ══════════════════════════════════════════════════════════════
@@ -55,7 +55,7 @@
     "summaryBuffer": true,
 
     // Context thresholds (absolute token values, not percentages):
-    // DeepSeek V4 actually has a 1M context window (not 128K); with percentages, 60%≈600K and
+    // Ark models have large windows (deepseek-v4: 1M, glm-5.3: 256K); with percentages, 60%≈600K and
     // 30%≈300K, which normal sessions (20K-200K) never reach, so DCP would never trigger compression.
     // Use absolute token values instead to restore the intended ~77K/38K proactive compression, decoupled from the model window.
     "maxContextLimit": 77000,
@@ -78,7 +78,7 @@
 
     // <protect> tags (off — we have no such usage pattern yet)
     "protectTags": false,
-    // Allow DCP to compress user messages (e.g. large log pastes), key for DeepSeek V4 1M window efficiency.
+    // Allow DCP to compress user messages (e.g. large log pastes), key for Ark large-window efficiency.
     // When set to true, all user messages are kept permanently — 20K+ log pastes become incompressible.
     "protectUserMessages": false
   },

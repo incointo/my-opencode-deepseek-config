@@ -2,7 +2,7 @@
 name: orchestrator
 description: Main entry point. Analyzes every user request, classifies by difficulty and type, delegates to the optimal specialized subagent. Use for all incoming tasks.
 mode: primary
-model: deepseek/deepseek-v4-flash
+model: volcengine-plan/deepseek-v4-flash
 steps: 100
 color: "#4A90E2"
 permission:
@@ -98,7 +98,7 @@ Expensive paths — oracle deep tracing, full-tree codemap of a large repo — a
 - **Collect context in a throwaway session, then execute fresh.** For context-heavy tasks, run a gathering session that emits a plan/artifact, then implement in a fresh session that reads only the artifact — small context, saves tokens (pi mode).
 - **Propagate verified ground-truth facts.** When a subagent (e.g. planner) establishes verified external-library semantics, include that verified summary in every subsequent delegation prompt (reviewer, deep-worker, re-reviewer) — prevents 3× redundant re-verification of the same source.
 - **Check implementer summary vs findings before re-review.** Before dispatching a re-review, diff the implementer's summary against each original finding to confirm complete coverage — catches partial fixes cheaply (flash) and avoids a wasted pro re-review round.
-- **Protect prompt-cache hits.** Follow AGENTS.md "DeepSeek Cache & Thinking Discipline": static prefix byte-stable, volatile content appended near the end, never reorder early messages.
+- **Protect prompt-cache hits.** Follow AGENTS.md "Cache & Thinking Discipline (Volcengine Ark)": static prefix byte-stable, volatile content appended near the end, never reorder early messages.
 
 ## Fallback Chains
 

@@ -1,13 +1,15 @@
-# My OpenCode × DeepSeek Config
+# My OpenCode × Volcengine Ark Config
 
 [简体中文](README.md) | **English**
 
-**OpenCode × DeepSeek Optimal Config** — a configuration scheme that pushes the DeepSeek V4 model family (Pro + Flash + Flash-Vision) to its full potential within OpenCode's multi-agent framework. Core philosophy: **token efficiency first — the best development results at the lowest context cost**.
+> **Source notice**: This repository is an adapted fork of [znlgis/my-opencode-deepseek-config](https://github.com/znlgis/my-opencode-deepseek-config). Based on the original v38 release, model access is migrated from the DeepSeek official API to Volcengine Ark (`volcengine-plan` provider), and the multimodal model is switched from `deepseek-v4-flash-vision-exp` to `glm-5.3-flash`. The original repo and its author znlgis retain their original copyright (MIT License).
+
+**OpenCode × Volcengine Ark Optimal Config** — a configuration scheme that pushes Volcengine Ark's DeepSeek V4 model family (Pro + Flash) plus GLM-5.3-Flash (multimodal) to its full potential within OpenCode's multi-agent framework. Core philosophy: **token efficiency first — the best development results at the lowest context cost**.
 
 ## Current Configuration Overview
 
 - Default primary agent: `orchestrator`
-- Primary model: `deepseek/deepseek-v4-pro`; lightweight model: `deepseek/deepseek-v4-flash`; multimodal model: `deepseek/deepseek-v4-flash-vision-exp`
+- Primary model: `volcengine-plan/deepseek-v4-pro`; lightweight model: `volcengine-plan/deepseek-v4-flash`; multimodal model: `volcengine-plan/glm-5.3-flash`
 - Agent nesting: `subagent_depth: 3` (supports 3 levels of subagent nesting)
 - Session sharing: off (`share: "disabled"`)
 - Permission baseline: allow by default, destructive bash commands set to `ask`; sensitive `.env`-type files `deny`; external directories `ask`; read-only agents get a bash allowlist (deny all by default + allow read-only subcommands only)
@@ -16,47 +18,47 @@
 - Skills: **20** `SKILL.md` skills under `skills/`, loaded on demand via the native `skill` tool
 - Plugins: `superpowers` (git URL pinned to tag `#v6.3.0`, process skills), `@tarquinen/opencode-dcp` (pinned to `@3.1.15`, intelligent context pruning); both are version-pinned to keep the prefix byte-stable and prevent prefix drift from auto-updates
 
-## DeepSeek Model Configuration
+## Model Configuration
 
 ### Prerequisites
 
-- OpenCode ≥ v1.18.x (the DeepSeek provider is built in)
-- DeepSeek API key: request one at [platform.deepseek.com/api_keys](https://platform.deepseek.com/api_keys)
+- OpenCode ≥ v1.18.x (the `volcengine-plan` provider is built in)
+- Volcengine Ark API key: request one in the [Ark console](https://console.volcengine.com/ark), or subscribe to an [Agent/Coding Plan](https://console.volcengine.com/ark) plan
 
 ### Option 1: Interactive TUI Setup (Recommended)
 
 ```bash
 opencode
-# In TUI enter: /connect → select DeepSeek → paste API Key
+# In TUI enter: /connect → select Volcengine Ark → paste API Key
 # Then: /models → select deepseek-v4-pro
 ```
 
-The API key is automatically persisted to `~/.local/share/opencode/auth.json`.
+The API key is automatically persisted to OpenCode's credential storage.
 
 ### Option 2: Environment Variable
 
 Windows PowerShell:
 ```powershell
-$env:DEEPSEEK_API_KEY="sk-your-key-here"
+$env:ARK_API_KEY="sk-your-key-here"
 opencode
 ```
 
-Permanent setup: add `DEEPSEEK_API_KEY` to your system environment variables.
+Permanent setup: add `ARK_API_KEY` to your system environment variables.
 
 ### Provider Configuration Reference
 
 ```jsonc
 {
-  "model": "deepseek/deepseek-v4-pro",
-  "small_model": "deepseek/deepseek-v4-flash"
+  "model": "volcengine-plan/deepseek-v4-pro",
+  "small_model": "volcengine-plan/deepseek-v4-flash"
 }
 ```
 
-This config splits thinking at the `provider` layer: flash disables thinking and pins `temperature: 0` (fastest, cheapest), while pro keeps the default (thinking on). The multimodal `deepseek-v4-flash-vision-exp` is flash-tier and mirrors flash's settings. Example (flash):
+This config splits thinking at the `provider` layer: flash disables thinking and pins `temperature: 0` (fastest, cheapest), while pro keeps thinking on. The multimodal `glm-5.3-flash` is flash-tier and mirrors flash's settings. Example (flash):
 
 ```jsonc
 "provider": {
-  "deepseek": {
+  "volcengine-plan": {
     "models": {
       "deepseek-v4-flash": {
         "options": {
@@ -64,7 +66,11 @@ This config splits thinking at the `provider` layer: flash disables thinking and
           "thinking": { "type": "disabled" }
         }
       },
-      "deepseek-v4-flash-vision-exp": {
+      "glm-5.3-flash": {
+        "modalities": {
+          "input": ["text", "image"],
+          "output": ["text"]
+        },
         "options": {
           "temperature": 0,
           "thinking": { "type": "disabled" }
@@ -75,7 +81,7 @@ This config splits thinking at the `provider` layer: flash disables thinking and
 }
 ```
 
-> **Model ID naming convention**: `provider_id/model_id` — i.e. `deepseek/deepseek-v4-pro`, `deepseek/deepseek-v4-flash`, and `deepseek/deepseek-v4-flash-vision-exp`.
+> **Model ID naming convention**: `provider_id/model_id` — i.e. `volcengine-plan/deepseek-v4-pro`, `volcengine-plan/deepseek-v4-flash`, and `volcengine-plan/glm-5.3-flash`.
 
 ## Installation
 
@@ -126,7 +132,7 @@ ln -s /path/to/my-opencode-deepseek-config/opencode ~/.config/opencode
 ### Verify the Installation
 
 Launch OpenCode and confirm:
-1. `/models` → the current model is `deepseek/deepseek-v4-pro`
+1. `/models` → the current model is `volcengine-plan/deepseek-v4-pro`
 2. The agent list shows all 11 agents, including `orchestrator`, `planner`, and `deep-worker`
 3. Send any request — the Orchestrator analyzes intent and routes automatically
 
@@ -146,18 +152,18 @@ This copies the config files under `opencode/` into `~/.config/opencode/` (exclu
 
 ## Model Division of Labor
 
-This repo strictly divides work within the DeepSeek V4 model family — no other models are introduced:
+This repo strictly divides work among Ark's three models — no other models are introduced:
 
 | Model | Purpose |
 | --- | --- |
-| `deepseek/deepseek-v4-pro` | Deep reasoning, root-cause analysis, code review, heavy multi-file implementation |
-| `deepseek/deepseek-v4-flash` | Orchestration/routing, planning, routine implementation, consultation, UI, exploration, external lookup, light edits, title/summary/compaction |
-| `deepseek/deepseek-v4-flash-vision-exp` | Multimodal: understanding and describing images, screenshots, charts, and UI mockups |
+| `volcengine-plan/deepseek-v4-pro` | Deep reasoning, root-cause analysis, code review, heavy multi-file implementation |
+| `volcengine-plan/deepseek-v4-flash` | Orchestration/routing, planning, routine implementation, consultation, UI, exploration, external lookup, light edits, title/summary/compaction |
+| `volcengine-plan/glm-5.3-flash` | Multimodal: understanding and describing images, screenshots, charts, and UI mockups |
 
 ### Routing Strategy
 
 - **Flash first**: well-defined tasks — routing, search, planning, routine implementation, consultation, UI, exploration — go to flash agents first
-- **Vision owns multimodal**: when visual input (images, screenshots, charts) is detected, route to the `vision` agent (flash-vision model)
+- **Vision owns multimodal**: when visual input (images, screenshots, charts) is detected, route to the `vision` agent (GLM-5.3-Flash multimodal model)
 - **Pro reserved for reasoning**: deep reasoning, root-cause analysis, code review, heavy multi-file implementation — pro only
 - **Automatic escalation**: when a flash agent can't handle a task, it escalates to pro automatically (with full context)
 
@@ -182,7 +188,7 @@ This repo strictly divides work within the DeepSeek V4 model family — no other
 | `explore` | v4-flash | **read-only** | Codebase search, parallel exploration |
 | `librarian` | v4-flash | **read-only** | Documentation lookup, web search |
 | `light-orchestrator` | v4-flash | read-write | Lightweight tasks, single-file edits |
-| `vision` | v4-flash-vision-exp | read-write | Multimodal: images/screenshots/charts/UI mockups |
+| `vision` | glm-5.3-flash | read-write | Multimodal: images/screenshots/charts/UI mockups |
 
 > `deep-worker` and `light-orchestrator` follow a "no research, no delegation" principle — they execute, not explore; context is provided by the orchestrator.
 >
@@ -318,11 +324,11 @@ The core ideas draw on [oh-my-openagent](https://github.com/code-yeongyu/oh-my-o
 ## Design Philosophy
 
 - **Pure config-driven, zero extra dependencies** — every capability comes from `opencode.jsonc` + `agents/*.md` + `skills/*/SKILL.md` + `AGENTS.md`
-- **Maximum use of the DeepSeek V4 model family** — Pro for deep reasoning and heavy implementation, Flash for routing, planning, and routine execution, Flash-Vision for multimodal tasks
+- **Maximum use of the Volcengine Ark model family** — Pro for deep reasoning and heavy implementation, Flash for routing, planning, and routine execution, GLM-5.3-Flash for multimodal tasks
 - **Token efficiency first** — path references instead of pasted files, skills loaded on demand, tiered compression management
 - **Plugins add value without stealing the spotlight** — superpowers provides process discipline, DCP (dcp.jsonc) handles proactive dedup + compression thresholds, built-in compaction (opencode.jsonc) handles auto-trigger + prune fallback; both plugins are version-pinned to keep the prefix byte-stable and prevent prefix drift from auto-updates
 - **Execution separated from exploration** — deep-worker/light-orchestrator must not research or delegate; explore/librarian must not modify
-- **Cache + thinking discipline** — stable static prefixes to hit DeepSeek's prompt cache; flash disables thinking + temperature 0 (provider layer), pro keeps thinking on by default
+- **Cache + thinking discipline** — stable static prefixes to hit Ark's prompt cache; flash disables thinking + temperature 0 (provider layer), pro keeps thinking on by default
 - **Scope First + Delegate Always** — define scope first (2+ steps / multi-file / architecture changes go through planner), then delegate execution; top-level tokens are reserved for routing and hard problems
 - **Atomic TODOs** — multi-step tasks start with an ordered TODO list, one item in_progress → completed at a time; format `path: action for scenario — verify by check`
 - **Continuous improvement** — reflect mechanizes friction discovery, code-review's evidence gating guards quality

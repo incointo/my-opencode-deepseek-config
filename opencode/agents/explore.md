@@ -2,7 +2,7 @@
 name: explore
 description: Codebase search specialist. Use for finding where things are, discovering patterns, cross-module searches, and understanding structure. Fire multiple instances in parallel for broad searches.
 mode: subagent
-model: deepseek/deepseek-v4-flash
+model: volcengine-plan/deepseek-v4-flash
 steps: 40
 color: "#2ECC71"
 hidden: true

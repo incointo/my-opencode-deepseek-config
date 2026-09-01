@@ -35,7 +35,7 @@ orchestrator prompt (`agents/orchestrator.md`).
 10. **Be concise.** Keep answers short and direct. No fluff, no cheerful filler,
     no unnecessary preamble. Technical prose only.
 
-## DeepSeek Cache & Thinking Discipline
+## Cache & Thinking Discipline (Volcengine Ark)
 
 - **Byte-stable prefix.** Agent prompts, AGENTS.md, rule order stay byte-
   identical; early reorders bust the prefix cache and re-pay full input cost.
@@ -68,9 +68,9 @@ zh-CN Windows system, Chinese; en-US, English. Never force English unless asked.
 
 ## Constraints (this repository)
 
-- **No new models.** Only `deepseek/deepseek-v4-pro`,
-  `deepseek/deepseek-v4-flash`, and the multimodal
-  `deepseek/deepseek-v4-flash-vision-exp` may be used. Do not introduce others.
+- **No new models.** Only `volcengine-plan/deepseek-v4-pro`,
+  `volcengine-plan/deepseek-v4-flash`, and the multimodal
+  `volcengine-plan/glm-5.3-flash` may be used. Do not introduce others.
 - **No new dependencies** without explicit justification from the user.
 - **Pure-config philosophy.** Prefer prompt/config changes over new tooling.
 
