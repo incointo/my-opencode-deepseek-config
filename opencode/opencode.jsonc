@@ -88,8 +88,8 @@
             "description": "Official opencode docs, schema, and configuration examples"
         },
         "volcengine-ark-docs": {
-            "repository": "volcengine/volcengine-sdk-docs",
-            "description": "Volcengine Ark docs: OpenAI-compatible API setup, thinking toggle, context caching, model catalog"
+            "repository": "volcengine/ark-cli",
+            "description": "Volcengine Ark official CLI: OpenAI-compatible API setup, model catalog, agent integration examples"
         }
     },
     // Built-in utility agents (no .md file). Flash-first policy: build/plan/
