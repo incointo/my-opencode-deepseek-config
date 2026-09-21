@@ -110,7 +110,7 @@ function validate(filePath) {
 
 const targets = process.argv.slice(2).length > 0
   ? process.argv.slice(2)
-  : ['opencode/opencode.jsonc', 'opencode/dcp.jsonc'];
+  : ['opencode/opencode.json', 'opencode/dcp.jsonc'];
 
 console.log('Validating OpenCode JSONC configs...\n');
 

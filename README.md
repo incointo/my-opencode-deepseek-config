@@ -2,18 +2,18 @@
 
 **简体中文** | [English](README.en-US.md)
 
-> **来源声明**：本仓库是 [znlgis/my-opencode-deepseek-config](https://github.com/znlgis/my-opencode-deepseek-config) 的改编分支（fork）。基于原作者 v38 版本，将模型接入从 DeepSeek 官方 API 迁移至火山方舟（Volcengine Ark，`volcengine-plan` provider），多模态模型由 `deepseek-v4-flash-vision-exp` 替换为 `glm-5.3-flash`。原仓库与原作者 znlgis 保留其原始版权（MIT License）。
+> **来源声明**：本仓库是 [znlgis/my-opencode-deepseek-config](https://github.com/znlgis/my-opencode-deepseek-config) 的改编分支（fork）。基于原作者 v38 版本，将模型接入从 DeepSeek 官方 API 迁移至火山方舟（Volcengine Ark，`huoshancoding` provider），多模态模型由 `deepseek-v4-flash-vision-exp` 替换为 `glm-5.3-flash`。原仓库与原作者 znlgis 保留其原始版权（MIT License）。
 
 **OpenCode × 火山方舟最优配置** —— 在 OpenCode 多 Agent 框架下，将方舟 DeepSeek V4 Flash 与 GLM-5.3-Flash（多模态）双模型的能力发挥到极致的配置方案。核心理念：**Token 效率优先，用最小的上下文成本达到最好的开发效果**。
 
 ## 当前配置概览
 
 - 默认主 Agent：`orchestrator`
-- 主模型：`volcengine-plan/deepseek-v4-flash`，轻量模型：`volcengine-plan/deepseek-v4-flash`，多模态模型：`volcengine-plan/glm-5.3-flash`
+- 主模型：`huoshancoding/deepseek-v4-flash`，轻量模型：`huoshancoding/deepseek-v4-flash`，多模态模型：`huoshancoding/glm-5.3-flash`
 - 代理层级：`subagent_depth: 3`（支持 3 级代理嵌套）
 - 会话分享：关闭（`share: "disabled"`）
 - 权限基线：默认放行，破坏性 bash 命令设为 `ask`；`.env` 类敏感文件 `deny`；外部目录 `ask`；只读 Agent 的 bash 白名单（默认 deny 全部 + 仅放行只读子命令）
-- 上下文压缩：内置 compaction（opencode.jsonc）管自动触发 + prune 裁旧工具输出，DCP（dcp.jsonc）管主动去重 + 压缩阈值，两者互补
+- 上下文压缩：内置 compaction（opencode.json）管自动触发 + prune 裁旧工具输出，DCP（dcp.jsonc）管主动去重 + 压缩阈值，两者互补
 - 全局规则：`AGENTS.md`（核心原则、任务拒绝契约、自我验证、反模式等；上下文/Token 纪律在 `AGENTS.md`）
 - 技能：`skills/` 目录下 **20 个** `SKILL.md` 技能，通过原生 `skill` 工具按需加载
 - 插件：`superpowers`（git URL 固定 tag `#v6.3.0`，过程型技能）、`@tarquinen/opencode-dcp`（固定版本 `@3.1.15`，智能上下文裁剪）；两者均固定版本（pin）以保证字节稳定前缀、避免自动更新导致的前缀漂移
@@ -22,7 +22,7 @@
 
 ### 前置条件
 
-- OpenCode ≥ v1.18.x（`volcengine-plan` provider 为内置）
+- OpenCode ≥ v1.18.x（`huoshancoding` provider 为内置）
 - 火山方舟 API Key：在[方舟控制台](https://console.volcengine.com/ark)申请，或开通 [Agent/Coding Plan](https://console.volcengine.com/ark) 订阅套餐
 
 ### 方式一：TUI 交互式配置（推荐）
@@ -49,8 +49,8 @@ opencode
 
 ```jsonc
 {
-  "model": "volcengine-plan/deepseek-v4-flash",
-  "small_model": "volcengine-plan/deepseek-v4-flash"
+  "model": "huoshancoding/deepseek-v4-flash",
+  "small_model": "huoshancoding/deepseek-v4-flash"
 }
 ```
 
@@ -58,7 +58,7 @@ opencode
 
 ```jsonc
 "provider": {
-  "volcengine-plan": {
+  "huoshancoding": {
     "models": {
       "deepseek-v4-flash": {
         "options": {
@@ -81,7 +81,7 @@ opencode
 }
 ```
 
-> **模型 ID 命名规则**：`provider_id/model_id`，即 `volcengine-plan/deepseek-v4-flash`、`volcengine-plan/deepseek-v4-flash` 和 `volcengine-plan/glm-5.3-flash`。
+> **模型 ID 命名规则**：`provider_id/model_id`，即 `huoshancoding/deepseek-v4-flash`、`huoshancoding/deepseek-v4-flash` 和 `huoshancoding/glm-5.3-flash`。
 
 ## 安装部署
 
@@ -132,7 +132,7 @@ ln -s /path/to/my-opencode-deepseek-config/opencode ~/.config/opencode
 ### 验证安装
 
 启动 OpenCode 确认：
-1. `/models` → 当前模型为 `volcengine-plan/deepseek-v4-flash`
+1. `/models` → 当前模型为 `huoshancoding/deepseek-v4-flash`
 2. Agent 列表应能看到 `orchestrator`、`planner`、`deep-worker` 等 11 个 Agent
 3. 输入任意请求，Orchestrator 自动分析意图并路由
 
@@ -156,9 +156,9 @@ ln -s /path/to/my-opencode-deepseek-config/opencode ~/.config/opencode
 
 | 模型 | 用途 |
 | --- | --- |
-| `volcengine-plan/deepseek-v4-flash` | 深度推理、根因分析、代码审查、重型多文件实现 |
-| `volcengine-plan/deepseek-v4-flash` | 编排/路由、规划、常规实现、咨询、UI、探索、外部检索、轻量编辑、标题/摘要/压缩 |
-| `volcengine-plan/glm-5.3-flash` | 多模态：图像/截图/图表/UI 稿的理解与描述 |
+| `huoshancoding/deepseek-v4-flash` | 深度推理、根因分析、代码审查、重型多文件实现 |
+| `huoshancoding/deepseek-v4-flash` | 编排/路由、规划、常规实现、咨询、UI、探索、外部检索、轻量编辑、标题/摘要/压缩 |
+| `huoshancoding/glm-5.3-flash` | 多模态：图像/截图/图表/UI 稿的理解与描述 |
 
 ### 路由策略
 
@@ -266,7 +266,7 @@ OpenCode 通过原生 `skill` 工具按需暴露技能——Agent 只在需要�
 ## 仓库结构
 
 ```text
-├── opencode/          # OpenCode 配置目录（agents/、skills/、opencode.jsonc、AGENTS.md、dcp.jsonc）
+├── opencode/          # OpenCode 配置目录（agents/、skills/、opencode.json、AGENTS.md、dcp.jsonc）
 ├── scripts/           # sync-config.ps1（同步到全局配置）+ validate-jsonc.js（JSONC 校验）
 ├── README.md          # 简体中文（默认）
 ├── README.en-US.md    # English
@@ -323,10 +323,10 @@ OpenCode 通过原生 `skill` 工具按需暴露技能——Agent 只在需要�
 
 ## 设计哲学
 
-- **纯配置驱动，零额外依赖** —— 所有能力由 `opencode.jsonc` + `agents/*.md` + `skills/*/SKILL.md` + `AGENTS.md` 实现
+- **纯配置驱动，零额外依赖** —— 所有能力由 `opencode.json` + `agents/*.md` + `skills/*/SKILL.md` + `AGENTS.md` 实现
 - **双模型极致利用** —— Flash 做路由、规划、常规实现与重型分工（oracle/reviewer/deep-worker 同模型不同提示词），GLM-5.3-Flash 专责多模态与主对话
 - **Token 效率优先** —— 路径引用替代粘贴文件、技能按需加载、压缩分级管理
-- **插件增效但不喧宾夺主** —— superpowers 提供过程纪律，DCP（dcp.jsonc）主动去重+压缩阈值，内置 compaction（opencode.jsonc）自动触发+prune 兜底；两插件均固定版本（pin）以保字节稳定前缀，避免自动更新导致前缀漂移
+- **插件增效但不喧宾夺主** —— superpowers 提供过程纪律，DCP（dcp.jsonc）主动去重+压缩阈值，内置 compaction（opencode.json）自动触发+prune 兜底；两插件均固定版本（pin）以保字节稳定前缀，避免自动更新导致前缀漂移
 - **执行与探索分离** —— deep-worker/light-orchestrator 禁止研究/委托，explore/librarian 禁止修改
 - **缓存与 thinking 纪律** —— 静态前缀稳定以命中方舟提示词缓存；flash 关 thinking + temperature 0（provider 层），glm-5.3-flash thinking 常开（无法关闭，实测 400）
 - **Scope First + Delegate Always** —— 先定范围（2+ 步/多文件/架构变更先走 planner），再委派执行，顶层 token 只留给路由与难题

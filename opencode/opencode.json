@@ -1,0 +1,210 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "agent": {
+    "build": {
+      "model": "huoshancoding/deepseek-v4-flash"
+    },
+    "compaction": {
+      "model": "huoshancoding/deepseek-v4-flash"
+    },
+    "plan": {
+      "model": "huoshancoding/deepseek-v4-flash"
+    },
+    "summary": {
+      "model": "huoshancoding/deepseek-v4-flash"
+    },
+    "title": {
+      "model": "huoshancoding/deepseek-v4-flash"
+    }
+  },
+  "autoupdate": "notify",
+  "command": {
+    "codemap": {
+      "agent": "explore",
+      "description": "Generate a structured hierarchical map of the codebase for quick orientation",
+      "template": "Load the codemap skill and generate an annotated directory tree for this project. Build the raw tree (depth 3, excluding node_modules/.git/dist/build/.next/coverage), annotate key directories with one-line purpose descriptions, and add quick-reference metadata (language, framework, runtime, build/test commands). Keep the whole map under 200 lines. If .opencode/codemap.md exists and appears fresh, update it rather than overwriting."
+    },
+    "commit": {
+      "agent": "light-orchestrator",
+      "description": "Stage changes and write a Conventional Commits message",
+      "template": "Here is the current state:\n\nStatus:\n!`git status --short`\n\nDiff (staged + unstaged):\n!`git diff HEAD`\n\nStage the relevant changes and write a single commit message following Conventional Commits: type(scope): imperative-mood subject. Types: feat/fix/docs/chore/refactor/test. Use BREAKING CHANGE: footer if applicable. Do not push."
+    },
+    "deep": {
+      "agent": "deep-worker",
+      "description": "Route to deep-worker for heavy implementation",
+      "template": "Handle this task with thoroughness and precision."
+    },
+    "handoff": {
+      "agent": "light-orchestrator",
+      "description": "Compact conversation for next agent session",
+      "template": "Load the handoff skill. Compact the current conversation into a handoff document saved to the OS temp directory. Reference existing artifacts (specs, plans, diffs) by path — never copy their content. Include a suggested-skills section for the next session. Redact sensitive information."
+    },
+    "learn": {
+      "agent": "deep-worker",
+      "description": "Extract non-obvious learnings from this session into directory-level AGENTS.md files",
+      "template": "Analyze this session and extract non-obvious learnings to add to AGENTS.md files. AGENTS.md files can exist at any directory level, not just the project root — when an agent reads a file, any AGENTS.md in parent directories are auto-loaded into the tool read. Place learnings as close to the relevant code as possible: project-wide → root AGENTS.md; package/module-specific → packages/foo/AGENTS.md; feature-specific → src/auth/AGENTS.md. Include only non-obvious discoveries: hidden relationships, execution paths that differ from how code appears, non-obvious config/env/flags, debugging breakthroughs, API/tool quirks, build/test commands not in README, architectural decisions, files that must change together. Exclude obvious facts, standard framework behavior, things already in an AGENTS.md, verbose explanations, session-specific details. Keep entries to 1-3 lines per insight. After updating, summarize which AGENTS.md files were created/updated and how many learnings per file."
+    },
+    "oracle": {
+      "agent": "oracle",
+      "description": "Route to oracle for deep code analysis and root cause debugging",
+      "template": "Analyze and find the root cause of the following."
+    },
+    "plan": {
+      "agent": "planner",
+      "description": "Route to planner for strategic planning",
+      "template": "Create a detailed plan for the following."
+    },
+    "quick": {
+      "agent": "light-orchestrator",
+      "description": "Route to light-orchestrator for simple tasks",
+      "template": "Handle this task quickly and efficiently."
+    },
+    "reflect": {
+      "agent": "oracle",
+      "description": "Review recent work to identify recurring friction and propose minimal config improvements",
+      "template": "Load the reflect skill. Review recent sessions and work patterns to identify recurring friction points — places where agents repeatedly waste tokens, make the same mistakes, or produce known anti-patterns. Propose minimal, durable improvements to the opencode config (agents, skills, commands, or AGENTS.md rules). Follow the reflect skill's discipline: one friction → one root cause → one minimal fix. Never propose sweeping rewrites or new models."
+    },
+    "release": {
+      "agent": "deep-worker",
+      "description": "Prepare a tagged release using the git-release skill",
+      "template": "Load the git-release skill and prepare a tagged release: draft release notes from merged PRs, propose a SemVer bump, and produce the gh release command."
+    },
+    "review": {
+      "agent": "reviewer",
+      "description": "Route to reviewer for code review",
+      "template": "Load the code-review skill. Scope the diff, scale depth to effective size, review it, and report findings by severity. Do not modify code."
+    },
+    "review-pr": {
+      "agent": "reviewer",
+      "description": "Review a PR and post findings as a pending GitHub review",
+      "template": "Load the code-review and gh-cli skills. Review the PR diff, then post findings per the gh-cli skill's 'Reviewing PRs' section (pending review, event=COMMENT, never auto-approve). Do not modify code."
+    },
+    "rmslop": {
+      "agent": "deep-worker",
+      "description": "Remove AI slop and dead code from the current changes",
+      "template": "Load the remove-deadcode skill. Review the current diff and remove AI slop: filler/boilerplate comments that restate the code, commented-out code, needless defensive wrappers, dead code that verification proves is unreferenced. Follow AGENTS.md Comment Discipline. Do not change behavior; verify build/tests still pass and report what you removed."
+    },
+    "simplify": {
+      "agent": "light-orchestrator",
+      "description": "Simplify code without changing behavior — reduce nesting, remove unnecessary abstraction, cut dead variables",
+      "template": "Load the simplify skill. Two-stage flow: (1) spawn the oracle subagent (read-only) to analyze the target file(s) and produce a simplification plan — for each simplification, the exact oldString to replace and newString to use; (2) apply those edits yourself, then verify each change preserves behavior (run tests / re-read). Oracle never edits; you never analyze. If oracle finds no valid simplifications, report that and stop."
+    },
+    "spec-apply": {
+      "agent": "deep-worker",
+      "description": "Implement a spec-driven change task-by-task, verify, then auto-archive on completion",
+      "template": "Load the spec-workflow skill. For the requested change under openspec/changes/: read proposal.md, design.md, delta specs, then work tasks.md one unchecked item at a time, marking each - [x]. If a task is blocked or design proves wrong, update the artifacts. After all tasks complete, run the archive action: fold delta specs into openspec/specs/ and move to openspec/changes/archive/. Run any available verification."
+    },
+    "spec-propose": {
+      "agent": "planner",
+      "description": "Explore code then draft a spec-driven change proposal (or update an existing one if intent overlaps >50%)",
+      "template": "Load the spec-workflow skill. If there is an existing change under openspec/changes/ with >50% scope overlap to the current intent, run update action on it. Otherwise, scaffold a new openspec/changes/<change-id>/ with proposal.md, tasks.md, delta specs, and design.md only if warranted. Focus on WHY and WHAT, not HOW. Stop after the artifacts are ready for review."
+    },
+    "ui": {
+      "agent": "ui-builder",
+      "description": "Route to ui-builder for frontend work",
+      "template": "Build or modify the UI as requested."
+    },
+    "vision": {
+      "agent": "vision",
+      "description": "Route to vision for multimodal tasks (images, screenshots, diagrams)",
+      "template": "Read the attached image(s) and describe what you see. Report findings with concrete details (text, layout, colors, positions). If the task requires code changes beyond visual interpretation, escalate to deep-worker."
+    }
+  },
+  "compaction": {
+    "auto": true,
+    "preserve_recent_tokens": 12000,
+    "prune": true,
+    "reserved": 10240,
+    "tail_turns": 8
+  },
+  "default_agent": "orchestrator",
+  "formatter": true,
+  "instructions": [
+    "AGENTS.md"
+  ],
+  "lsp": true,
+  "model": "huoshancoding/glm-5.3-flash",
+  "permission": {
+    "bash": {
+      "*": "allow",
+      "Remove-Item -Recurse -Force*": "ask",
+      "del /f /q*": "ask",
+      "del /f /s*": "ask",
+      "format *": "ask",
+      "gh pr close*": "ask",
+      "gh repo delete*": "ask",
+      "git branch -D*": "ask",
+      "git push --force*": "ask",
+      "git push -f *": "ask",
+      "git reset --hard*": "ask",
+      "git stash clear*": "ask",
+      "git stash drop*": "ask",
+      "rd /s*": "ask",
+      "rm -fr*": "ask",
+      "rm -rf*": "ask"
+    },
+    "external_directory": "ask",
+    "read": {
+      "*": "allow",
+      "*.env": "deny",
+      "*.env.*": "deny",
+      "*.env.example": "allow",
+      ".env": "deny"
+    },
+    "skill": {
+      "*": "allow"
+    }
+  },
+  "plugin": [
+    "superpowers@git+https://github.com/obra/superpowers.git#v6.3.0",
+    "@tarquinen/opencode-dcp@3.1.15"
+  ],
+  "provider": {
+    "huoshancoding": {
+      "models": {
+        "ark-code-latest": {
+          "name": "Ark Code Latest"
+        },
+        "deepseek-v4-flash": {
+          "name": "DeepSeek V4 Flash",
+          "options": {
+            "temperature": 0,
+            "thinking": {
+              "type": "disabled"
+            }
+          }
+        },
+        "glm-5.3-flash": {
+          "name": "GLM 5.3 Flash",
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ],
+            "output": [
+              "text"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "references": {
+    "opencode-docs": {
+      "branch": "dev",
+      "description": "Official opencode docs, schema, and configuration examples",
+      "repository": "anomalyco/opencode"
+    },
+    "volcengine-ark-docs": {
+      "description": "Volcengine Ark official CLI: OpenAI-compatible API setup, model catalog, agent integration examples",
+      "repository": "volcengine/ark-cli"
+    }
+  },
+  "share": "disabled",
+  "small_model": "huoshancoding/deepseek-v4-flash",
+  "subagent_depth": 3,
+  "tool_output": {
+    "max_bytes": 20480,
+    "max_lines": 800
+  }
+}

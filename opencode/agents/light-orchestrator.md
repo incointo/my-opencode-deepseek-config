@@ -3,7 +3,7 @@ name: light-orchestrator
 description: "Lightweight executor. Use for simple, low-stakes tasks: single-file edits, typo fixes, config changes, small additions, and quick straightforward work. Also handles miscellaneous tasks that don't fit other specialists."
 mode: subagent
 hidden: true
-model: volcengine-plan/deepseek-v4-flash
+model: huoshancoding/deepseek-v4-flash
 steps: 30
 color: "#1ABC9C"
 permission:
@@ -31,7 +31,7 @@ You are the lightweight handler for simple, low-risk tasks. Get in, do the work,
 Reject the task immediately — do not attempt a degraded version — when:
 - **>1 non-trivial file**: refuse, escalate to `deep-worker` (heavy implementation)
 - **External research required**: refuse; orchestrator must pre-research via `librarian`
-- **Self-modifying config**: refuse (touching `agents/`, `skills/`, `opencode.jsonc`, `AGENTS.md`); use `deep-worker`
+- **Self-modifying config**: refuse (touching `agents/`, `skills/`, `opencode.json`, `AGENTS.md`); use `deep-worker`
 - **Architectural decisions or new features**: refuse, escalate to `planner`
 - **Uncertainty**: if you are not confident the task is low-risk and well-defined, refuse
 

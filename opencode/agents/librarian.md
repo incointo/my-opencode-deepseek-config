@@ -2,7 +2,7 @@
 name: librarian
 description: External research specialist. Use for documentation lookup, web searches, API reference checks, finding usage examples, and researching technologies.
 mode: subagent
-model: volcengine-plan/deepseek-v4-flash
+model: huoshancoding/deepseek-v4-flash
 steps: 30
 color: "#8E44AD"
 hidden: true

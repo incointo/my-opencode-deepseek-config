@@ -26,7 +26,7 @@ external API surface.
 ## References Local-First
 
 Before fetching from the web, check if the target library is available as a
-local reference in `opencode.jsonc` → `references`. If mounted (e.g., via
+local reference in `opencode.json` → `references`. If mounted (e.g., via
 `references: { "opencode": { "repository": "anomalyco/opencode" } }`), read
 the source code from the local clone first. Only fall back to web fetch if:
 - The reference is outdated (commit older than the version in use)

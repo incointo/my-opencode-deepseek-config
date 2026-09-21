@@ -2,18 +2,18 @@
 
 [简体中文](README.md) | **English**
 
-> **Source notice**: This repository is an adapted fork of [znlgis/my-opencode-deepseek-config](https://github.com/znlgis/my-opencode-deepseek-config). Based on the original v38 release, model access is migrated from the DeepSeek official API to Volcengine Ark (`volcengine-plan` provider), and the multimodal model is switched from `deepseek-v4-flash-vision-exp` to `glm-5.3-flash`. The original repo and its author znlgis retain their original copyright (MIT License).
+> **Source notice**: This repository is an adapted fork of [znlgis/my-opencode-deepseek-config](https://github.com/znlgis/my-opencode-deepseek-config). Based on the original v38 release, model access is migrated from the DeepSeek official API to Volcengine Ark (`huoshancoding` provider), and the multimodal model is switched from `deepseek-v4-flash-vision-exp` to `glm-5.3-flash`. The original repo and its author znlgis retain their original copyright (MIT License).
 
 **OpenCode × Volcengine Ark Optimal Config** — a configuration scheme that pushes Volcengine Ark's DeepSeek V4 Flash plus GLM-5.3-Flash (multimodal) two-model combo to its full potential within OpenCode's multi-agent framework. Core philosophy: **token efficiency first — the best development results at the lowest context cost**.
 
 ## Current Configuration Overview
 
 - Default primary agent: `orchestrator`
-- Primary model: `volcengine-plan/deepseek-v4-flash`; lightweight model: `volcengine-plan/deepseek-v4-flash`; multimodal model: `volcengine-plan/glm-5.3-flash`
+- Primary model: `huoshancoding/deepseek-v4-flash`; lightweight model: `huoshancoding/deepseek-v4-flash`; multimodal model: `huoshancoding/glm-5.3-flash`
 - Agent nesting: `subagent_depth: 3` (supports 3 levels of subagent nesting)
 - Session sharing: off (`share: "disabled"`)
 - Permission baseline: allow by default, destructive bash commands set to `ask`; sensitive `.env`-type files `deny`; external directories `ask`; read-only agents get a bash allowlist (deny all by default + allow read-only subcommands only)
-- Context compression: built-in compaction (opencode.jsonc) handles auto-triggering + pruning of stale tool output; DCP (dcp.jsonc) handles proactive dedup + compression thresholds — the two complement each other
+- Context compression: built-in compaction (opencode.json) handles auto-triggering + pruning of stale tool output; DCP (dcp.jsonc) handles proactive dedup + compression thresholds — the two complement each other
 - Global rules: `AGENTS.md` (core principles, task rejection contract, self-verification, anti-patterns, etc.; context/token discipline in `AGENTS.md`)
 - Skills: **20** `SKILL.md` skills under `skills/`, loaded on demand via the native `skill` tool
 - Plugins: `superpowers` (git URL pinned to tag `#v6.3.0`, process skills), `@tarquinen/opencode-dcp` (pinned to `@3.1.15`, intelligent context pruning); both are version-pinned to keep the prefix byte-stable and prevent prefix drift from auto-updates
@@ -22,7 +22,7 @@
 
 ### Prerequisites
 
-- OpenCode ≥ v1.18.x (the `volcengine-plan` provider is built in)
+- OpenCode ≥ v1.18.x (the `huoshancoding` provider is built in)
 - Volcengine Ark API key: request one in the [Ark console](https://console.volcengine.com/ark), or subscribe to an [Agent/Coding Plan](https://console.volcengine.com/ark) plan
 
 ### Option 1: Interactive TUI Setup (Recommended)
@@ -49,8 +49,8 @@ Permanent setup: add `ARK_API_KEY` to your system environment variables.
 
 ```jsonc
 {
-  "model": "volcengine-plan/deepseek-v4-flash",
-  "small_model": "volcengine-plan/deepseek-v4-flash"
+  "model": "huoshancoding/deepseek-v4-flash",
+  "small_model": "huoshancoding/deepseek-v4-flash"
 }
 ```
 
@@ -58,7 +58,7 @@ This config splits thinking at the `provider` layer: flash disables thinking and
 
 ```jsonc
 "provider": {
-  "volcengine-plan": {
+  "huoshancoding": {
     "models": {
       "deepseek-v4-flash": {
         "options": {
@@ -81,7 +81,7 @@ This config splits thinking at the `provider` layer: flash disables thinking and
 }
 ```
 
-> **Model ID naming convention**: `provider_id/model_id` — i.e. `volcengine-plan/deepseek-v4-flash`, `volcengine-plan/deepseek-v4-flash`, and `volcengine-plan/glm-5.3-flash`.
+> **Model ID naming convention**: `provider_id/model_id` — i.e. `huoshancoding/deepseek-v4-flash`, `huoshancoding/deepseek-v4-flash`, and `huoshancoding/glm-5.3-flash`.
 
 ## Installation
 
@@ -132,7 +132,7 @@ ln -s /path/to/my-opencode-deepseek-config/opencode ~/.config/opencode
 ### Verify the Installation
 
 Launch OpenCode and confirm:
-1. `/models` → the current model is `volcengine-plan/deepseek-v4-flash`
+1. `/models` → the current model is `huoshancoding/deepseek-v4-flash`
 2. The agent list shows all 11 agents, including `orchestrator`, `planner`, and `deep-worker`
 3. Send any request — the Orchestrator analyzes intent and routes automatically
 
@@ -156,9 +156,9 @@ This repo strictly divides work among Ark's three models — no other models are
 
 | Model | Purpose |
 | --- | --- |
-| `volcengine-plan/deepseek-v4-flash` | Deep reasoning, root-cause analysis, code review, heavy multi-file implementation |
-| `volcengine-plan/deepseek-v4-flash` | Orchestration/routing, planning, routine implementation, consultation, UI, exploration, external lookup, light edits, title/summary/compaction |
-| `volcengine-plan/glm-5.3-flash` | Multimodal: understanding and describing images, screenshots, charts, and UI mockups |
+| `huoshancoding/deepseek-v4-flash` | Deep reasoning, root-cause analysis, code review, heavy multi-file implementation |
+| `huoshancoding/deepseek-v4-flash` | Orchestration/routing, planning, routine implementation, consultation, UI, exploration, external lookup, light edits, title/summary/compaction |
+| `huoshancoding/glm-5.3-flash` | Multimodal: understanding and describing images, screenshots, charts, and UI mockups |
 
 ### Routing Strategy
 
@@ -266,7 +266,7 @@ OpenCode exposes skills on demand via the native `skill` tool — agents load th
 ## Repository Structure
 
 ```text
-├── opencode/          # OpenCode config directory (agents/, skills/, opencode.jsonc, AGENTS.md, dcp.jsonc)
+├── opencode/          # OpenCode config directory (agents/, skills/, opencode.json, AGENTS.md, dcp.jsonc)
 ├── scripts/           # sync-config.ps1 (sync to global config) + validate-jsonc.js (JSONC validation)
 ├── README.md          # Simplified Chinese (default)
 ├── README.en-US.md    # English
@@ -323,10 +323,10 @@ The core ideas draw on [oh-my-openagent](https://github.com/code-yeongyu/oh-my-o
 
 ## Design Philosophy
 
-- **Pure config-driven, zero extra dependencies** — every capability comes from `opencode.jsonc` + `agents/*.md` + `skills/*/SKILL.md` + `AGENTS.md`
+- **Pure config-driven, zero extra dependencies** — every capability comes from `opencode.json` + `agents/*.md` + `skills/*/SKILL.md` + `AGENTS.md`
 - **Two-model combo used to its full potential** — Flash handles routing, planning, routine implementation, and the heavy divisions (oracle/reviewer/deep-worker: same model, heavier prompts), GLM-5.3-Flash owns multimodal and main chat
 - **Token efficiency first** — path references instead of pasted files, skills loaded on demand, tiered compression management
-- **Plugins add value without stealing the spotlight** — superpowers provides process discipline, DCP (dcp.jsonc) handles proactive dedup + compression thresholds, built-in compaction (opencode.jsonc) handles auto-trigger + prune fallback; both plugins are version-pinned to keep the prefix byte-stable and prevent prefix drift from auto-updates
+- **Plugins add value without stealing the spotlight** — superpowers provides process discipline, DCP (dcp.jsonc) handles proactive dedup + compression thresholds, built-in compaction (opencode.json) handles auto-trigger + prune fallback; both plugins are version-pinned to keep the prefix byte-stable and prevent prefix drift from auto-updates
 - **Execution separated from exploration** — deep-worker/light-orchestrator must not research or delegate; explore/librarian must not modify
 - **Cache + thinking discipline** — stable static prefixes to hit Ark's prompt cache; flash disables thinking + temperature 0 (provider layer), glm-5.3-flash keeps thinking always on (cannot be disabled, verified 400)
 - **Scope First + Delegate Always** — define scope first (2+ steps / multi-file / architecture changes go through planner), then delegate execution; top-level tokens are reserved for routing and hard problems

@@ -2,7 +2,7 @@
 name: vision
 description: Multimodal specialist. Use for tasks involving images, screenshots, diagrams, charts, UI mockups, or any visual input that needs understanding or description. Runs on the glm-5.3-flash model.
 mode: subagent
-model: volcengine-plan/glm-5.3-flash
+model: huoshancoding/glm-5.3-flash
 steps: 25
 color: "#9B59B6"
 permission:
