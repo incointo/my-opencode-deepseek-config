@@ -1,14 +1,17 @@
 # scripts/sync-config.ps1
 #
-# Copy the repo's opencode/ config files to the global config directory.
-# The global ~/.config/opencode is an independent copy (not a symlink), so the
-# repo is the source of truth: edits must be synced here to take effect.
+# Publish the live global config (~/.config/opencode) into this repo's
+# opencode/ directory. The live config is the source of truth; the repo is a
+# published mirror. Because the repo is public, opencode.json is REDACTED on
+# publish: provider-level name/npm/options (apiKey, baseURL, setCacheKey) are
+# stripped while models are kept. A leak guard aborts the publish if
+# credential material survives redaction.
 #
 # Usage:
-#   .\scripts\sync-config.ps1                           # default: repo's opencode/ dir
-#   .\scripts\sync-config.ps1 -Src "D:\path\to\opencode"
-#   .\scripts\sync-config.ps1 -Destination "D:\path\to\config"  # override target dir (for testing)
-#   .\scripts\sync-config.ps1 -WhatIf                   # preview stale-file deletions without removing
+#   .\scripts\sync-config.ps1                          # live -> repo
+#   .\scripts\sync-config.ps1 -WhatIf                  # preview, write nothing
+#   .\scripts\sync-config.ps1 -Src "D:\path\to\opencode"              # override live dir
+#   .\scripts\sync-config.ps1 -Destination "D:\path\to\repo\opencode" # override repo dir (testing)
 
 param(
     [string]$Src = "",
@@ -16,52 +19,109 @@ param(
     [switch]$WhatIf
 )
 
+$ErrorActionPreference = 'Stop'
+
 if ([string]::IsNullOrEmpty($Src)) {
-    $Src = Join-Path (Split-Path -Parent $PSScriptRoot) "opencode"
+    $Src = Join-Path $env:USERPROFILE ".config\opencode"
 }
 $Src = $Src.TrimEnd('\')
 
 if ([string]::IsNullOrEmpty($Destination)) {
-    $dst = Join-Path $env:USERPROFILE ".config\opencode"
-} else {
-    $dst = $Destination
+    $Destination = Join-Path (Split-Path -Parent $PSScriptRoot) "opencode"
 }
-$dst = $dst.TrimEnd('\')
+$dst = $Destination.TrimEnd('\')
 
 if (-not (Test-Path -LiteralPath $Src -PathType Container)) {
-    Write-Error "Source directory not found: $Src"
+    Write-Error "Live config directory not found: $Src"
+    exit 1
+}
+if (-not (Test-Path -LiteralPath $dst -PathType Container)) {
+    Write-Error "Repo config directory not found: $dst"
     exit 1
 }
 
-# Copy every file except node_modules and package manifests: plugin
-# dependencies and lockfiles belong to the global install, not the repo.
-Get-ChildItem -Recurse -File -LiteralPath $Src | Where-Object {
-    $rel = $_.FullName.Substring($Src.Length + 1)
-    $rel -notmatch 'node_modules' -and $rel -notmatch 'package(-lock)?\.json$'
-} | ForEach-Object {
-    $rel = $_.FullName.Substring($Src.Length + 1)
-    $target = Join-Path $dst $rel
-    New-Item -ItemType Directory -Force -Path (Split-Path $target) | Out-Null
-    Copy-Item -LiteralPath $_.FullName -Destination $target -Force
+# Never publish: plugin dependencies (they belong to the live install), editor
+# backups, or a live opencode.jsonc -- a committed opencode.jsonc silently
+# overrides opencode.json on opencode startup (config load order) and would
+# resurrect the stale-override trap for anyone cloning this repo.
+$excludePatterns = @(
+    '(^|/)node_modules(/|$)',
+    '(^|/)package(-lock)?\.json$',
+    '\.bak$',
+    '^opencode\.jsonc$'
+)
+
+$files = Get-ChildItem -Recurse -File -LiteralPath $Src | Where-Object {
+    $rel = $_.FullName.Substring($Src.Length + 1) -replace '\\', '/'
+    $keep = $true
+    foreach ($pat in $excludePatterns) {
+        if ($rel -match $pat) { $keep = $false; break }
+    }
+    $keep
+}
+
+$copied = 0
+foreach ($f in $files) {
+    $rel = $f.FullName.Substring($Src.Length + 1) -replace '\\', '/'
+    $target = Join-Path $dst ($rel -replace '/', '\')
+
+    if ($rel -eq 'opencode.json') {
+        # Public repo: strip provider connection details before writing.
+        $json = Get-Content -Raw -LiteralPath $f.FullName | ConvertFrom-Json
+        if ($json.provider) {
+            foreach ($p in $json.provider.PSObject.Properties) {
+                if ($p.Value -is [System.Management.Automation.PSCustomObject]) {
+                    foreach ($field in @('name', 'npm', 'options')) {
+                        if ($null -ne $p.Value.PSObject.Properties[$field]) {
+                            $p.Value.PSObject.Properties.Remove($field)
+                        }
+                    }
+                }
+            }
+        }
+        $out = $json | ConvertTo-Json -Depth 100
+
+        # Leak guard: abort rather than publish credential material. Catches
+        # keys stored outside provider options by a future config revision.
+        if ($out -match '"apiKey"' -or $out -match 'ark-[0-9a-f]{8}-') {
+            Write-Error "Leak guard tripped: opencode.json still contains credential material after redaction. Aborting."
+            exit 1
+        }
+
+        if ($WhatIf) {
+            Write-Host "Would redact+write: $rel"
+        } else {
+            # UTF-8 without BOM: Set-Content -Encoding UTF8 emits a BOM on
+            # Windows PowerShell 5.1, and JSON should not carry one.
+            [IO.File]::WriteAllText($target, $out, (New-Object System.Text.UTF8Encoding($false)))
+            Write-Host "Redacted+written: $rel"
+        }
+        $copied++
+        continue
+    }
+
+    if ($WhatIf) {
+        Write-Host "Would copy: $rel"
+    } else {
+        New-Item -ItemType Directory -Force -Path (Split-Path -Parent $target) | Out-Null
+        Copy-Item -LiteralPath $f.FullName -Destination $target -Force
+    }
+    $copied++
 }
 
 # Resolve $dst to its canonical full path. Get-ChildItem reports the resolved
-# long path (e.g. C:\Users\Administrator\...), while a caller may pass an 8.3
-# short name (e.g. C:\Users\ADMINI~1\...) as -Destination; without this the
-# substring arithmetic below would miscompute relative paths. The copy step has
-# already created $dst by this point.
+# long path, while a caller may pass an 8.3 short name (e.g. ADMINI~1) as
+# -Destination; without this the substring arithmetic below would miscompute
+# relative paths.
 if (Test-Path -LiteralPath $dst -PathType Container) {
     $dst = (Get-Item -LiteralPath $dst).FullName
 }
 
-# Delete reconciliation: remove target files the repo used to manage but no
-# longer does (e.g. skills deleted from the repo). Only the `skills`, `agents`,
-# and `commands` subdirectories are reconciled -- never the whole target dir --
-# so files the user created locally (never tracked by git) are left untouched.
-#
-# $managed = union of (currently tracked paths) and (paths deleted at any point
-# in git history), with the leading `opencode/` prefix stripped and separators
-# normalized to `/`.
+# Delete reconciliation (repo side): remove files git used to track under
+# skills/agents/commands that no longer exist in the live config (e.g. a skill
+# deleted from ~/.config/opencode). Only these three subdirectories are
+# reconciled -- never the whole repo opencode/ dir -- so repo-only files
+# outside them are left untouched.
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $managed = @(
     git -C $repoRoot ls-files -- opencode/skills opencode/agents opencode/commands
@@ -71,14 +131,14 @@ $managed = @(
     Sort-Object -Unique
 
 $toDelete = @()
-foreach ($dir in 'skills', 'agents', 'commands') {
-    $targetDir = Join-Path $dst $dir
-    if (-not (Test-Path -LiteralPath $targetDir -PathType Container)) { continue }
-    Get-ChildItem -Recurse -File -LiteralPath $targetDir | ForEach-Object {
+foreach ($dir in @('skills', 'agents', 'commands')) {
+    $repoDir = Join-Path $dst $dir
+    if (-not (Test-Path -LiteralPath $repoDir -PathType Container)) { continue }
+    Get-ChildItem -Recurse -File -LiteralPath $repoDir | ForEach-Object {
         $rel = ($_.FullName.Substring($dst.Length + 1)) -replace '\\', '/'
         if ($managed -contains $rel) {
-            $srcPath = Join-Path $Src ($rel -replace '/', '\')
-            if (-not (Test-Path -LiteralPath $srcPath -PathType Leaf)) {
+            $livePath = Join-Path $Src ($rel -replace '/', '\')
+            if (-not (Test-Path -LiteralPath $livePath -PathType Leaf)) {
                 $toDelete += $rel
             }
         }
@@ -100,4 +160,27 @@ if ($toDelete.Count -eq 0) {
     }
 }
 
-Write-Host "Synced $Src -> $dst"
+# Validate what was published. validate-jsonc.js takes explicit file paths,
+# so this also covers a -Destination override used for testing.
+$validator = Join-Path $repoRoot "scripts\validate-jsonc.js"
+$targets = @(Join-Path $dst "opencode.json")
+if (Test-Path -LiteralPath (Join-Path $dst "dcp.jsonc") -PathType Leaf) {
+    $targets += Join-Path $dst "dcp.jsonc"
+}
+if (Test-Path -LiteralPath $validator -PathType Leaf) {
+    if ($WhatIf) {
+        Write-Host "Would validate: $($targets -join ', ')"
+    } else {
+        & node $validator @targets
+        if ($LASTEXITCODE -ne 0) {
+            Write-Error "Published config failed validation."
+            exit 1
+        }
+    }
+}
+
+Write-Host ""
+Write-Host "Published $copied file(s): $Src -> $dst"
+if (-not $WhatIf) {
+    Write-Host "Next: review 'git diff' in the repo, then commit and push manually."
+}

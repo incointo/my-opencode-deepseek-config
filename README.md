@@ -136,19 +136,21 @@ ln -s /path/to/my-opencode-deepseek-config/opencode ~/.config/opencode
 2. Agent 列表应能看到 `orchestrator`、`planner`、`deep-worker` 等 11 个 Agent
 3. 输入任意请求，Orchestrator 自动分析意图并路由
 
-### 同步
+### 同步（发布）
 
-`~/.config/opencode` 是独立副本（非符号链接），本仓库才是配置源。改完仓库后需手动同步才生效。Windows 下运行：
+`~/.config/opencode` 是配置源（live），本仓库是其公开镜像。改动 live 配置后，运行脚本发布到仓库：脚本自动脱敏 `opencode.json` 的 provider 连接块（`name`/`npm`/`options`，含 apiKey 与 baseURL，仅保留 `models`），然后运行 JSONC 校验。Windows 下运行：
 
 ```powershell
 .\scripts\sync-config.ps1
 ```
 
-将 `opencode/` 下的配置文件同步到 `~/.config/opencode/`（排除 `node_modules`、`package.json`、`package-lock.json`）。脚本支持 `-Src` 传参指定源目录，便于其他机器使用：
+发布排除 `node_modules`、`package*.json`、`*.bak`、`opencode.jsonc`。用 `-WhatIf` 预览发布内容，`-Src` 指定其他 live 目录：
 
 ```powershell
-.\scripts\sync-config.ps1 -Src "D:\path\to\my-opencode-deepseek-config\opencode"
+.\scripts\sync-config.ps1 -WhatIf
 ```
+
+发布后检查 `git diff`，确认无敏感信息再手动 commit + push。切勿把仓库的 `opencode.json` 拷回 live——仓库版本已脱敏，会抹掉真实 key 导致 provider 无法解析。
 
 ## 模型分工
 
@@ -267,7 +269,7 @@ OpenCode 通过原生 `skill` 工具按需暴露技能——Agent 只在需要�
 
 ```text
 ├── opencode/          # OpenCode 配置目录（agents/、skills/、opencode.json、AGENTS.md、dcp.jsonc）
-├── scripts/           # sync-config.ps1（同步到全局配置）+ validate-jsonc.js（JSONC 校验）
+├── scripts/           # sync-config.ps1（发布全局配置到仓库，自动脱敏）+ validate-jsonc.js（JSONC 校验）
 ├── README.md          # 简体中文（默认）
 ├── README.en-US.md    # English
 └── LICENSE

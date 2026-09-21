@@ -136,19 +136,21 @@ Launch OpenCode and confirm:
 2. The agent list shows all 11 agents, including `orchestrator`, `planner`, and `deep-worker`
 3. Send any request — the Orchestrator analyzes intent and routes automatically
 
-### Sync
+### Sync (Publish)
 
-`~/.config/opencode` is an independent copy (not a symlink) — the repo is the source of truth. After editing the repo, sync manually for changes to take effect. On Windows:
+`~/.config/opencode` is the source of truth (live); this repo is its published public mirror. After editing the live config, run the script to publish into the repo: it automatically redacts the provider connection block in `opencode.json` (`name`/`npm`/`options`, including apiKey and baseURL — only `models` are kept), then runs JSONC validation. On Windows:
 
 ```powershell
 .\scripts\sync-config.ps1
 ```
 
-This copies the config files under `opencode/` into `~/.config/opencode/` (excluding `node_modules`, `package.json`, and `package-lock.json`). Pass `-Src` to specify a custom source directory for use on other machines:
+Publishing excludes `node_modules`, `package*.json`, `*.bak`, and `opencode.jsonc`. Use `-WhatIf` to preview the publish, and `-Src` to point at a different live directory:
 
 ```powershell
-.\scripts\sync-config.ps1 -Src "D:\path\to\my-opencode-deepseek-config\opencode"
+.\scripts\sync-config.ps1 -WhatIf
 ```
+
+Review `git diff` after publishing and commit + push manually once no sensitive data is present. Never copy the repo's `opencode.json` back into live — it is redacted and would strip the real key, breaking the provider.
 
 ## Model Division of Labor
 
@@ -267,7 +269,7 @@ OpenCode exposes skills on demand via the native `skill` tool — agents load th
 
 ```text
 ├── opencode/          # OpenCode config directory (agents/, skills/, opencode.json, AGENTS.md, dcp.jsonc)
-├── scripts/           # sync-config.ps1 (sync to global config) + validate-jsonc.js (JSONC validation)
+├── scripts/           # sync-config.ps1 (publish global config into repo, auto-redacted) + validate-jsonc.js (JSONC validation)
 ├── README.md          # Simplified Chinese (default)
 ├── README.en-US.md    # English
 └── LICENSE
