@@ -9,12 +9,12 @@
 ## 当前配置概览
 
 - 默认主 Agent：`orchestrator`
-- 主模型：`huoshancoding/deepseek-v4-flash`，轻量模型：`huoshancoding/deepseek-v4-flash`，多模态模型：`huoshancoding/glm-5.3-flash`
+- 主模型与轻量模型：`huoshancoding/deepseek-v4-flash`（orchestrator、全部 subagent 及内置工具 agent 共用）；多模态与顶层默认模型：`huoshancoding/glm-5.3-flash`
 - 代理层级：`subagent_depth: 3`（支持 3 级代理嵌套）
 - 会话分享：关闭（`share: "disabled"`）
 - 权限基线：默认放行，破坏性 bash 命令设为 `ask`；`.env` 类敏感文件 `deny`；外部目录 `ask`；只读 Agent 的 bash 白名单（默认 deny 全部 + 仅放行只读子命令）
 - 上下文压缩：内置 compaction（opencode.json）管自动触发 + prune 裁旧工具输出，DCP（dcp.jsonc）管主动去重 + 压缩阈值，两者互补
-- 全局规则：`AGENTS.md`（核心原则、任务拒绝契约、自我验证、反模式等；上下文/Token 纪律在 `AGENTS.md`）
+- 全局规则：`AGENTS.md`（核心原则、任务拒绝契约、自我验证、反模式、缓存与 thinking 纪律等）
 - 技能：`skills/` 目录下 **20 个** `SKILL.md` 技能，通过原生 `skill` 工具按需加载
 - 插件：`superpowers`（git URL 固定 tag `#v6.3.0`，过程型技能）、`@tarquinen/opencode-dcp`（固定版本 `@3.1.15`，智能上下文裁剪）；两者均固定版本（pin）以保证字节稳定前缀、避免自动更新导致的前缀漂移
 
@@ -22,7 +22,7 @@
 
 ### 前置条件
 
-- OpenCode ≥ v1.18.x（`huoshancoding` provider 为内置）
+- OpenCode ≥ v1.18.x（`huoshancoding` provider 已在配置中显式声明，基于 `@ai-sdk/openai-compatible`，无需额外插件）
 - 火山方舟 API Key：在[方舟控制台](https://console.volcengine.com/ark)申请，或开通 [Agent/Coding Plan](https://console.volcengine.com/ark) 订阅套餐
 
 ### 方式一：TUI 交互式配置（推荐）
@@ -30,7 +30,7 @@
 ```bash
 opencode
 # 在 TUI 中输入: /connect → 选择 Volcengine Ark → 粘贴 API Key
-# 然后: /models → 选择 glm-5.3-flash（主对话）或 deepseek-v4-flash
+# 然后: /models → 选择 glm-5.3-flash（多模态/顶层默认）或 deepseek-v4-flash
 ```
 
 API Key 会自动持久化到 OpenCode 凭据存储。
@@ -49,7 +49,7 @@ opencode
 
 ```jsonc
 {
-  "model": "huoshancoding/deepseek-v4-flash",
+  "model": "huoshancoding/glm-5.3-flash",
   "small_model": "huoshancoding/deepseek-v4-flash"
 }
 ```
@@ -70,10 +70,6 @@ opencode
         "modalities": {
           "input": ["text", "image"],
           "output": ["text"]
-        },
-        "options": {
-          "temperature": 0,
-          "thinking": { "type": "disabled" }
         }
       }
     }
@@ -81,7 +77,9 @@ opencode
 }
 ```
 
-> **模型 ID 命名规则**：`provider_id/model_id`，即 `huoshancoding/deepseek-v4-flash`、`huoshancoding/deepseek-v4-flash` 和 `huoshancoding/glm-5.3-flash`。
+> **模型 ID 命名规则**：`provider_id/model_id`，即 `huoshancoding/deepseek-v4-flash` 和 `huoshancoding/glm-5.3-flash`。
+>
+> 本仓库发布的 `opencode.json` 已按隐私约定脱敏 provider 连接块（`name`/`npm`/`options`）。直接部署仓库配置时，需在 `provider.huoshancoding` 下自行补回这三项：`npm` 为 `@ai-sdk/openai-compatible`，`baseURL` 为方舟 Coding Plan 端点，`apiKey` 为你的 Key。
 
 ## 安装部署
 
@@ -132,7 +130,7 @@ ln -s /path/to/my-opencode-deepseek-config/opencode ~/.config/opencode
 ### 验证安装
 
 启动 OpenCode 确认：
-1. `/models` → 当前模型为 `huoshancoding/deepseek-v4-flash`
+1. `/models` → 当前模型为 `huoshancoding/glm-5.3-flash`（orchestrator 实际运行 `huoshancoding/deepseek-v4-flash`）
 2. Agent 列表应能看到 `orchestrator`、`planner`、`deep-worker` 等 11 个 Agent
 3. 输入任意请求，Orchestrator 自动分析意图并路由
 
@@ -154,13 +152,12 @@ ln -s /path/to/my-opencode-deepseek-config/opencode ~/.config/opencode
 
 ## 模型分工
 
-本仓库严格限制在方舟三模型内分工，不引入其他模型：
+本仓库严格限制在方舟两模型内分工，不引入其他模型：
 
 | 模型 | 用途 |
 | --- | --- |
-| `huoshancoding/deepseek-v4-flash` | 深度推理、根因分析、代码审查、重型多文件实现 |
-| `huoshancoding/deepseek-v4-flash` | 编排/路由、规划、常规实现、咨询、UI、探索、外部检索、轻量编辑、标题/摘要/压缩 |
-| `huoshancoding/glm-5.3-flash` | 多模态：图像/截图/图表/UI 稿的理解与描述 |
+| `huoshancoding/deepseek-v4-flash` | 编排/路由、规划、常规与重型实现、深度推理、根因分析、代码审查、咨询、UI、探索、外部检索、轻量编辑、标题/摘要/压缩 |
+| `huoshancoding/glm-5.3-flash` | 多模态：图像/截图/图表/UI 稿的理解与描述（`vision` agent；另为顶层 `model` 默认值） |
 
 ### 路由策略
 
@@ -326,7 +323,7 @@ OpenCode 通过原生 `skill` 工具按需暴露技能——Agent 只在需要�
 ## 设计哲学
 
 - **纯配置驱动，零额外依赖** —— 所有能力由 `opencode.json` + `agents/*.md` + `skills/*/SKILL.md` + `AGENTS.md` 实现
-- **双模型极致利用** —— Flash 做路由、规划、常规实现与重型分工（oracle/reviewer/deep-worker 同模型不同提示词），GLM-5.3-Flash 专责多模态与主对话
+- **双模型极致利用** —— Flash 做路由、规划、常规实现与重型分工（oracle/reviewer/deep-worker 同模型不同提示词），GLM-5.3-Flash 专责多模态（`vision` agent），并作为顶层默认模型
 - **Token 效率优先** —— 路径引用替代粘贴文件、技能按需加载、压缩分级管理
 - **插件增效但不喧宾夺主** —— superpowers 提供过程纪律，DCP（dcp.jsonc）主动去重+压缩阈值，内置 compaction（opencode.json）自动触发+prune 兜底；两插件均固定版本（pin）以保字节稳定前缀，避免自动更新导致前缀漂移
 - **执行与探索分离** —— deep-worker/light-orchestrator 禁止研究/委托，explore/librarian 禁止修改

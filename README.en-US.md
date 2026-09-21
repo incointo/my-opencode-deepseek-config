@@ -9,12 +9,12 @@
 ## Current Configuration Overview
 
 - Default primary agent: `orchestrator`
-- Primary model: `huoshancoding/deepseek-v4-flash`; lightweight model: `huoshancoding/deepseek-v4-flash`; multimodal model: `huoshancoding/glm-5.3-flash`
+- Primary & lightweight model: `huoshancoding/deepseek-v4-flash` (shared by the orchestrator, all subagents, and built-in utility agents); multimodal & top-level default model: `huoshancoding/glm-5.3-flash`
 - Agent nesting: `subagent_depth: 3` (supports 3 levels of subagent nesting)
 - Session sharing: off (`share: "disabled"`)
 - Permission baseline: allow by default, destructive bash commands set to `ask`; sensitive `.env`-type files `deny`; external directories `ask`; read-only agents get a bash allowlist (deny all by default + allow read-only subcommands only)
 - Context compression: built-in compaction (opencode.json) handles auto-triggering + pruning of stale tool output; DCP (dcp.jsonc) handles proactive dedup + compression thresholds — the two complement each other
-- Global rules: `AGENTS.md` (core principles, task rejection contract, self-verification, anti-patterns, etc.; context/token discipline in `AGENTS.md`)
+- Global rules: `AGENTS.md` (core principles, task rejection contract, self-verification, anti-patterns, cache & thinking discipline, etc.)
 - Skills: **20** `SKILL.md` skills under `skills/`, loaded on demand via the native `skill` tool
 - Plugins: `superpowers` (git URL pinned to tag `#v6.3.0`, process skills), `@tarquinen/opencode-dcp` (pinned to `@3.1.15`, intelligent context pruning); both are version-pinned to keep the prefix byte-stable and prevent prefix drift from auto-updates
 
@@ -22,7 +22,7 @@
 
 ### Prerequisites
 
-- OpenCode ≥ v1.18.x (the `huoshancoding` provider is built in)
+- OpenCode ≥ v1.18.x (the `huoshancoding` provider is declared explicitly in the config, based on `@ai-sdk/openai-compatible` — no extra plugin needed)
 - Volcengine Ark API key: request one in the [Ark console](https://console.volcengine.com/ark), or subscribe to an [Agent/Coding Plan](https://console.volcengine.com/ark) plan
 
 ### Option 1: Interactive TUI Setup (Recommended)
@@ -30,7 +30,7 @@
 ```bash
 opencode
 # In TUI enter: /connect → select Volcengine Ark → paste API Key
-# Then: /models → select glm-5.3-flash (main chat) or deepseek-v4-flash
+# Then: /models → select glm-5.3-flash (multimodal / top-level default) or deepseek-v4-flash
 ```
 
 The API key is automatically persisted to OpenCode's credential storage.
@@ -49,7 +49,7 @@ Permanent setup: add `ARK_API_KEY` to your system environment variables.
 
 ```jsonc
 {
-  "model": "huoshancoding/deepseek-v4-flash",
+  "model": "huoshancoding/glm-5.3-flash",
   "small_model": "huoshancoding/deepseek-v4-flash"
 }
 ```
@@ -70,10 +70,6 @@ This config splits thinking at the `provider` layer: flash disables thinking and
         "modalities": {
           "input": ["text", "image"],
           "output": ["text"]
-        },
-        "options": {
-          "temperature": 0,
-          "thinking": { "type": "disabled" }
         }
       }
     }
@@ -81,7 +77,9 @@ This config splits thinking at the `provider` layer: flash disables thinking and
 }
 ```
 
-> **Model ID naming convention**: `provider_id/model_id` — i.e. `huoshancoding/deepseek-v4-flash`, `huoshancoding/deepseek-v4-flash`, and `huoshancoding/glm-5.3-flash`.
+> **Model ID naming convention**: `provider_id/model_id` — i.e. `huoshancoding/deepseek-v4-flash` and `huoshancoding/glm-5.3-flash`.
+>
+> The `opencode.json` published in this repo is redacted per the privacy convention (the provider connection block `name`/`npm`/`options` is removed). To deploy the repo config directly, add these three fields back under `provider.huoshancoding`: `npm` is `@ai-sdk/openai-compatible`, `baseURL` is the Ark Coding Plan endpoint, and `apiKey` is your key.
 
 ## Installation
 
@@ -132,7 +130,7 @@ ln -s /path/to/my-opencode-deepseek-config/opencode ~/.config/opencode
 ### Verify the Installation
 
 Launch OpenCode and confirm:
-1. `/models` → the current model is `huoshancoding/deepseek-v4-flash`
+1. `/models` → the current model is `huoshancoding/glm-5.3-flash` (the orchestrator actually runs `huoshancoding/deepseek-v4-flash`)
 2. The agent list shows all 11 agents, including `orchestrator`, `planner`, and `deep-worker`
 3. Send any request — the Orchestrator analyzes intent and routes automatically
 
@@ -154,13 +152,12 @@ Review `git diff` after publishing and commit + push manually once no sensitive 
 
 ## Model Division of Labor
 
-This repo strictly divides work among Ark's three models — no other models are introduced:
+This repo strictly divides work among Ark's two models — no other models are introduced:
 
 | Model | Purpose |
 | --- | --- |
-| `huoshancoding/deepseek-v4-flash` | Deep reasoning, root-cause analysis, code review, heavy multi-file implementation |
-| `huoshancoding/deepseek-v4-flash` | Orchestration/routing, planning, routine implementation, consultation, UI, exploration, external lookup, light edits, title/summary/compaction |
-| `huoshancoding/glm-5.3-flash` | Multimodal: understanding and describing images, screenshots, charts, and UI mockups |
+| `huoshancoding/deepseek-v4-flash` | Orchestration/routing, planning, routine and heavy implementation, deep reasoning, root-cause analysis, code review, consultation, UI, exploration, external lookup, light edits, title/summary/compaction |
+| `huoshancoding/glm-5.3-flash` | Multimodal: understanding and describing images, screenshots, charts, and UI mockups (`vision` agent; also the top-level `model` default) |
 
 ### Routing Strategy
 
@@ -326,7 +323,7 @@ The core ideas draw on [oh-my-openagent](https://github.com/code-yeongyu/oh-my-o
 ## Design Philosophy
 
 - **Pure config-driven, zero extra dependencies** — every capability comes from `opencode.json` + `agents/*.md` + `skills/*/SKILL.md` + `AGENTS.md`
-- **Two-model combo used to its full potential** — Flash handles routing, planning, routine implementation, and the heavy divisions (oracle/reviewer/deep-worker: same model, heavier prompts), GLM-5.3-Flash owns multimodal and main chat
+- **Two-model combo used to its full potential** — Flash handles routing, planning, routine implementation, and the heavy divisions (oracle/reviewer/deep-worker: same model, heavier prompts); GLM-5.3-Flash owns multimodal (the `vision` agent) and serves as the top-level default model
 - **Token efficiency first** — path references instead of pasted files, skills loaded on demand, tiered compression management
 - **Plugins add value without stealing the spotlight** — superpowers provides process discipline, DCP (dcp.jsonc) handles proactive dedup + compression thresholds, built-in compaction (opencode.json) handles auto-trigger + prune fallback; both plugins are version-pinned to keep the prefix byte-stable and prevent prefix drift from auto-updates
 - **Execution separated from exploration** — deep-worker/light-orchestrator must not research or delegate; explore/librarian must not modify
