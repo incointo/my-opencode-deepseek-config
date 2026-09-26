@@ -2,7 +2,7 @@
 name: planner
 description: Strategic planner. Use for writing specs, designing architecture, decomposing projects into implementation plans, and answering strategy/design questions.
 mode: subagent
-model: huoshancoding/deepseek-v4-flash
+model: huoshancoding/deepseek-v4.1-flash
 steps: 60
 color: "#9B59B6"
 permission:

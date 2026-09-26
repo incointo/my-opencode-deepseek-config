@@ -3,7 +3,7 @@ name: light-orchestrator
 description: "Lightweight executor. Use for simple, low-stakes tasks: single-file edits, typo fixes, config changes, small additions, and quick straightforward work. Also handles miscellaneous tasks that don't fit other specialists."
 mode: subagent
 hidden: true
-model: huoshancoding/deepseek-v4-flash
+model: huoshancoding/deepseek-v4.1-flash
 steps: 30
 color: "#1ABC9C"
 permission:

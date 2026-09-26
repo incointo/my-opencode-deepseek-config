@@ -48,7 +48,8 @@ $excludePatterns = @(
     '(^|/)node_modules(/|$)',
     '(^|/)package(-lock)?\.json$',
     '\.bak$',
-    '^opencode\.jsonc$'
+    '^opencode\.jsonc$',
+    '(^|/)service\.json$'
 )
 
 $files = Get-ChildItem -Recurse -File -LiteralPath $Src | Where-Object {
@@ -67,7 +68,7 @@ foreach ($f in $files) {
 
     if ($rel -eq 'opencode.json') {
         # Public repo: strip provider connection details before writing.
-        $json = Get-Content -Raw -LiteralPath $f.FullName | ConvertFrom-Json
+        $json = Get-Content -Raw -Encoding UTF8 -LiteralPath $f.FullName | ConvertFrom-Json
         if ($json.provider) {
             foreach ($p in $json.provider.PSObject.Properties) {
                 if ($p.Value -is [System.Management.Automation.PSCustomObject]) {

@@ -25,6 +25,10 @@ Thumbs.db
 # OpenCode
 .opencode/codemap.md
 
+# service.json is synced verbatim from the live config (~/.config/opencode) and
+# holds a secret (local service password); it must never be published.
+opencode/service.json
+
 # Logs
 *.log
 

@@ -2,7 +2,7 @@
 name: orchestrator
 description: Main entry point. Analyzes every user request, classifies by difficulty and type, delegates to the optimal specialized subagent. Use for all incoming tasks.
 mode: primary
-model: huoshancoding/deepseek-v4-flash
+model: huoshancoding/deepseek-v4.1-flash
 steps: 100
 color: "#4A90E2"
 permission:
