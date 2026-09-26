@@ -68,7 +68,7 @@ zh-CN Windows system, Chinese; en-US, English. Never force English unless asked.
 
 ## Constraints (this repository)
 
-- **No new models.** Only `huoshancoding/deepseek-v4-flash` and the
+- **No new models.** Only `huoshancoding/deepseek-v4.1-flash` and the
   multimodal `huoshancoding/glm-5.3-flash` may be used. Do not introduce
   others.
 - **No new dependencies** without explicit justification from the user.

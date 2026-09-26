@@ -16,7 +16,7 @@ this file only covers this repository's local conventions.
 | `skills/<name>/SKILL.md` | On-demand skills, auto-discovered from the config dir |
 
 ## Hard constraints
-- Only `huoshancoding/deepseek-v4-flash` and the multimodal `huoshancoding/glm-5.3-flash`. Never a fourth model; glm-5.3-flash is for visual input only, never a default.
+- Only `huoshancoding/deepseek-v4.1-flash` and the multimodal `huoshancoding/glm-5.3-flash`. Never a fourth model; glm-5.3-flash is for visual input only, never a default.
 - Use the singular keys (`plugin`, `snapshot`), not the fork's plural (`plugins`, `snapshots`).
 
 ## Config key shapes (authoritative)
@@ -32,7 +32,7 @@ this file only covers this repository's local conventions.
 | `name` | kebab-case, matches filename |
 | `description` | When to use this agent (drives routing + @-menu) |
 | `mode` | `primary` \| `subagent` |
-| `model` | `huoshancoding/deepseek-v4-flash` \| `huoshancoding/glm-5.3-flash` (visual only) |
+| `model` | `huoshancoding/deepseek-v4.1-flash` \| `huoshancoding/glm-5.3-flash` (visual only) |
 | `steps` | step budget; heavier agents get more |
 | `color` | "#RRGGBB" |
 | `hidden` | optional: hide from @-menu |

@@ -9,7 +9,7 @@
 ## Current Configuration Overview
 
 - Default primary agent: `orchestrator`
-- Primary & lightweight model: `huoshancoding/deepseek-v4-flash` (shared by the orchestrator, all subagents, and built-in utility agents); multimodal & top-level default model: `huoshancoding/glm-5.3-flash`
+- Primary & lightweight model: `huoshancoding/deepseek-v4.1-flash` (shared by the orchestrator, all subagents, and built-in utility agents); multimodal & top-level default model: `huoshancoding/glm-5.3-flash`
 - Agent nesting: `subagent_depth: 3` (supports 3 levels of subagent nesting)
 - Session sharing: off (`share: "disabled"`)
 - Permission baseline: allow by default, destructive bash commands set to `ask`; sensitive `.env`-type files `deny`; external directories `ask`; read-only agents get a bash allowlist (deny all by default + allow read-only subcommands only)
@@ -30,7 +30,7 @@
 ```bash
 opencode
 # In TUI enter: /connect → select Volcengine Ark → paste API Key
-# Then: /models → select glm-5.3-flash (multimodal / top-level default) or deepseek-v4-flash
+# Then: /models → select glm-5.3-flash (multimodal / top-level default) or deepseek-v4.1-flash
 ```
 
 The API key is automatically persisted to OpenCode's credential storage.
@@ -50,7 +50,7 @@ Permanent setup: add `ARK_API_KEY` to your system environment variables.
 ```jsonc
 {
   "model": "huoshancoding/glm-5.3-flash",
-  "small_model": "huoshancoding/deepseek-v4-flash"
+  "small_model": "huoshancoding/deepseek-v4.1-flash"
 }
 ```
 
@@ -61,6 +61,13 @@ This config splits thinking at the `provider` layer: flash disables thinking and
   "huoshancoding": {
     "models": {
       "deepseek-v4-flash": {
+        "options": {
+          "temperature": 0,
+          "thinking": { "type": "disabled" }
+        }
+      },
+      "deepseek-v4.1-flash": {
+        "name": "DeepSeek V4.1 Flash",
         "options": {
           "temperature": 0,
           "thinking": { "type": "disabled" }
@@ -77,7 +84,7 @@ This config splits thinking at the `provider` layer: flash disables thinking and
 }
 ```
 
-> **Model ID naming convention**: `provider_id/model_id` — i.e. `huoshancoding/deepseek-v4-flash` and `huoshancoding/glm-5.3-flash`.
+> **Model ID naming convention**: `provider_id/model_id` — i.e. `huoshancoding/deepseek-v4.1-flash` and `huoshancoding/glm-5.3-flash`.
 >
 > The `opencode.json` published in this repo is redacted per the privacy convention (the provider connection block `name`/`npm`/`options` is removed). To deploy the repo config directly, add these three fields back under `provider.huoshancoding`: `npm` is `@ai-sdk/openai-compatible`, `baseURL` is the Ark Coding Plan endpoint, and `apiKey` is your key.
 
@@ -130,7 +137,7 @@ ln -s /path/to/my-opencode-deepseek-config/opencode ~/.config/opencode
 ### Verify the Installation
 
 Launch OpenCode and confirm:
-1. `/models` → the current model is `huoshancoding/glm-5.3-flash` (the orchestrator actually runs `huoshancoding/deepseek-v4-flash`)
+1. `/models` → the current model is `huoshancoding/glm-5.3-flash` (the orchestrator actually runs `huoshancoding/deepseek-v4.1-flash`)
 2. The agent list shows all 11 agents, including `orchestrator`, `planner`, and `deep-worker`
 3. Send any request — the Orchestrator analyzes intent and routes automatically
 
@@ -156,7 +163,7 @@ This repo strictly divides work among Ark's two models — no other models are i
 
 | Model | Purpose |
 | --- | --- |
-| `huoshancoding/deepseek-v4-flash` | Orchestration/routing, planning, routine and heavy implementation, deep reasoning, root-cause analysis, code review, consultation, UI, exploration, external lookup, light edits, title/summary/compaction |
+| `huoshancoding/deepseek-v4.1-flash` | Orchestration/routing, planning, routine and heavy implementation, deep reasoning, root-cause analysis, code review, consultation, UI, exploration, external lookup, light edits, title/summary/compaction |
 | `huoshancoding/glm-5.3-flash` | Multimodal: understanding and describing images, screenshots, charts, and UI mockups (`vision` agent; also the top-level `model` default) |
 
 ### Routing Strategy
@@ -172,21 +179,21 @@ This repo strictly divides work among Ark's two models — no other models are i
 
 | Agent | Model | Role |
 | --- | --- | --- |
-| `orchestrator` | v4-flash | Default entry point: intent gate + model-aware routing + fallback chains |
+| `orchestrator` | v4.1-flash | Default entry point: intent gate + model-aware routing + fallback chains |
 
 ### Subagents
 
 | Agent | Model | Permission | Role |
 | --- | --- | --- | --- |
-| `planner` | v4-flash | read-write | Planning, architecture, task breakdown |
-| `deep-worker` | v4-flash | read-write | Heavy implementation, multi-file changes, complex debugging |
-| `oracle` | v4-flash | **read-only** | Root-cause analysis, deep code understanding |
-| `reviewer` | v4-flash | **read-only** | Single-pass code review (evidence-gated) |
-| `ui-builder` | v4-flash | read-write | Frontend and UI tasks |
-| `consultant` | v4-flash | read-write | Approach discussions, best-practice advice |
-| `explore` | v4-flash | **read-only** | Codebase search, parallel exploration |
-| `librarian` | v4-flash | **read-only** | Documentation lookup, web search |
-| `light-orchestrator` | v4-flash | read-write | Lightweight tasks, single-file edits |
+| `planner` | v4.1-flash | read-write | Planning, architecture, task breakdown |
+| `deep-worker` | v4.1-flash | read-write | Heavy implementation, multi-file changes, complex debugging |
+| `oracle` | v4.1-flash | **read-only** | Root-cause analysis, deep code understanding |
+| `reviewer` | v4.1-flash | **read-only** | Single-pass code review (evidence-gated) |
+| `ui-builder` | v4.1-flash | read-write | Frontend and UI tasks |
+| `consultant` | v4.1-flash | read-write | Approach discussions, best-practice advice |
+| `explore` | v4.1-flash | **read-only** | Codebase search, parallel exploration |
+| `librarian` | v4.1-flash | **read-only** | Documentation lookup, web search |
+| `light-orchestrator` | v4.1-flash | read-write | Lightweight tasks, single-file edits |
 | `vision` | glm-5.3-flash | read-write | Multimodal: images/screenshots/charts/UI mockups |
 
 > `deep-worker` and `light-orchestrator` follow a "no research, no delegation" principle — they execute, not explore; context is provided by the orchestrator.

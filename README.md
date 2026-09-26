@@ -9,7 +9,7 @@
 ## 当前配置概览
 
 - 默认主 Agent：`orchestrator`
-- 主模型与轻量模型：`huoshancoding/deepseek-v4-flash`（orchestrator、全部 subagent 及内置工具 agent 共用）；多模态与顶层默认模型：`huoshancoding/glm-5.3-flash`
+- 主模型与轻量模型：`huoshancoding/deepseek-v4.1-flash`（orchestrator、全部 subagent 及内置工具 agent 共用）；多模态与顶层默认模型：`huoshancoding/glm-5.3-flash`
 - 代理层级：`subagent_depth: 3`（支持 3 级代理嵌套）
 - 会话分享：关闭（`share: "disabled"`）
 - 权限基线：默认放行，破坏性 bash 命令设为 `ask`；`.env` 类敏感文件 `deny`；外部目录 `ask`；只读 Agent 的 bash 白名单（默认 deny 全部 + 仅放行只读子命令）
@@ -30,7 +30,7 @@
 ```bash
 opencode
 # 在 TUI 中输入: /connect → 选择 Volcengine Ark → 粘贴 API Key
-# 然后: /models → 选择 glm-5.3-flash（多模态/顶层默认）或 deepseek-v4-flash
+# 然后: /models → 选择 glm-5.3-flash（多模态/顶层默认）或 deepseek-v4.1-flash
 ```
 
 API Key 会自动持久化到 OpenCode 凭据存储。
@@ -50,7 +50,7 @@ opencode
 ```jsonc
 {
   "model": "huoshancoding/glm-5.3-flash",
-  "small_model": "huoshancoding/deepseek-v4-flash"
+  "small_model": "huoshancoding/deepseek-v4.1-flash"
 }
 ```
 
@@ -61,6 +61,13 @@ opencode
   "huoshancoding": {
     "models": {
       "deepseek-v4-flash": {
+        "options": {
+          "temperature": 0,
+          "thinking": { "type": "disabled" }
+        }
+      },
+      "deepseek-v4.1-flash": {
+        "name": "DeepSeek V4.1 Flash",
         "options": {
           "temperature": 0,
           "thinking": { "type": "disabled" }
@@ -77,7 +84,7 @@ opencode
 }
 ```
 
-> **模型 ID 命名规则**：`provider_id/model_id`，即 `huoshancoding/deepseek-v4-flash` 和 `huoshancoding/glm-5.3-flash`。
+> **模型 ID 命名规则**：`provider_id/model_id`，即 `huoshancoding/deepseek-v4.1-flash` 和 `huoshancoding/glm-5.3-flash`。
 >
 > 本仓库发布的 `opencode.json` 已按隐私约定脱敏 provider 连接块（`name`/`npm`/`options`）。直接部署仓库配置时，需在 `provider.huoshancoding` 下自行补回这三项：`npm` 为 `@ai-sdk/openai-compatible`，`baseURL` 为方舟 Coding Plan 端点，`apiKey` 为你的 Key。
 
@@ -130,7 +137,7 @@ ln -s /path/to/my-opencode-deepseek-config/opencode ~/.config/opencode
 ### 验证安装
 
 启动 OpenCode 确认：
-1. `/models` → 当前模型为 `huoshancoding/glm-5.3-flash`（orchestrator 实际运行 `huoshancoding/deepseek-v4-flash`）
+1. `/models` → 当前模型为 `huoshancoding/glm-5.3-flash`（orchestrator 实际运行 `huoshancoding/deepseek-v4.1-flash`）
 2. Agent 列表应能看到 `orchestrator`、`planner`、`deep-worker` 等 11 个 Agent
 3. 输入任意请求，Orchestrator 自动分析意图并路由
 
@@ -156,7 +163,7 @@ ln -s /path/to/my-opencode-deepseek-config/opencode ~/.config/opencode
 
 | 模型 | 用途 |
 | --- | --- |
-| `huoshancoding/deepseek-v4-flash` | 编排/路由、规划、常规与重型实现、深度推理、根因分析、代码审查、咨询、UI、探索、外部检索、轻量编辑、标题/摘要/压缩 |
+| `huoshancoding/deepseek-v4.1-flash` | 编排/路由、规划、常规与重型实现、深度推理、根因分析、代码审查、咨询、UI、探索、外部检索、轻量编辑、标题/摘要/压缩 |
 | `huoshancoding/glm-5.3-flash` | 多模态：图像/截图/图表/UI 稿的理解与描述（`vision` agent；另为顶层 `model` 默认值） |
 
 ### 路由策略
@@ -172,21 +179,21 @@ ln -s /path/to/my-opencode-deepseek-config/opencode ~/.config/opencode
 
 | Agent | 模型 | 作用 |
 | --- | --- | --- |
-| `orchestrator` | v4-flash | 默认入口：意图门控（Intent Gate）+ 模型感知路由 + 后备链 |
+| `orchestrator` | v4.1-flash | 默认入口：意图门控（Intent Gate）+ 模型感知路由 + 后备链 |
 
 ### Subagents
 
 | Agent | 模型 | 权限 | 作用 |
 | --- | --- | --- | --- |
-| `planner` | v4-flash | 读写 | 规划、架构、拆解任务 |
-| `deep-worker` | v4-flash | 读写 | 重型实现、多文件改动、复杂调试 |
-| `oracle` | v4-flash | **只读** | 根因分析、深度理解代码 |
-| `reviewer` | v4-flash | **只读** | 单遍代码审查（证据门控） |
-| `ui-builder` | v4-flash | 读写 | 前端与 UI 相关任务 |
-| `consultant` | v4-flash | 读写 | 方案讨论、最佳实践建议 |
-| `explore` | v4-flash | **只读** | 代码库搜索、并行探索 |
-| `librarian` | v4-flash | **只读** | 文档检索、Web 搜索 |
-| `light-orchestrator` | v4-flash | 读写 | 轻量任务、单文件编辑 |
+| `planner` | v4.1-flash | 读写 | 规划、架构、拆解任务 |
+| `deep-worker` | v4.1-flash | 读写 | 重型实现、多文件改动、复杂调试 |
+| `oracle` | v4.1-flash | **只读** | 根因分析、深度理解代码 |
+| `reviewer` | v4.1-flash | **只读** | 单遍代码审查（证据门控） |
+| `ui-builder` | v4.1-flash | 读写 | 前端与 UI 相关任务 |
+| `consultant` | v4.1-flash | 读写 | 方案讨论、最佳实践建议 |
+| `explore` | v4.1-flash | **只读** | 代码库搜索、并行探索 |
+| `librarian` | v4.1-flash | **只读** | 文档检索、Web 搜索 |
+| `light-orchestrator` | v4.1-flash | 读写 | 轻量任务、单文件编辑 |
 | `vision` | glm-5.3-flash | 读写 | 多模态：图像/截图/图表/UI 稿理解 |
 
 > `deep-worker` 和 `light-orchestrator` 遵循"禁止研究、禁止委托"原则——执行而非探索，上下文由 orchestrator 提供。
