@@ -15,7 +15,7 @@
 - 权限基线：默认放行，破坏性 bash 命令设为 `ask`；`.env` 类敏感文件 `deny`；外部目录 `ask`；只读 Agent 的 bash 白名单（默认 deny 全部 + 仅放行只读子命令）
 - 上下文压缩：内置 compaction（opencode.json）管自动触发 + prune 裁旧工具输出，DCP（dcp.jsonc）管主动去重 + 压缩阈值，两者互补
 - 全局规则：`AGENTS.md`（核心原则、任务拒绝契约、自我验证、反模式、缓存与 thinking 纪律等）
-- 技能：`skills/` 目录下 **20 个** `SKILL.md` 技能，通过原生 `skill` 工具按需加载
+- 技能：`skills/` 目录下 **21 个** `SKILL.md` 技能，通过原生 `skill` 工具按需加载
 - 插件：`superpowers`（git URL 固定 tag `#v6.3.0`，过程型技能）、`@tarquinen/opencode-dcp`（固定版本 `@3.1.15`，智能上下文裁剪）；两者均固定版本（pin）以保证字节稳定前缀、避免自动更新导致的前缀漂移
 
 ## 模型配置
@@ -86,7 +86,7 @@ opencode
 ### 方式一：克隆 + 环境变量（推荐，跨平台通用）
 
 ```bash
-git clone https://github.com/znlgis/my-opencode-deepseek-config.git
+git clone https://github.com/incointo/my-opencode-deepseek-config.git
 ```
 
 然后将 `OPENCODE_CONFIG_DIR` 指向仓库内的 `opencode/` 子目录即可使用。

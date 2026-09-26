@@ -15,7 +15,7 @@
 - Permission baseline: allow by default, destructive bash commands set to `ask`; sensitive `.env`-type files `deny`; external directories `ask`; read-only agents get a bash allowlist (deny all by default + allow read-only subcommands only)
 - Context compression: built-in compaction (opencode.json) handles auto-triggering + pruning of stale tool output; DCP (dcp.jsonc) handles proactive dedup + compression thresholds — the two complement each other
 - Global rules: `AGENTS.md` (core principles, task rejection contract, self-verification, anti-patterns, cache & thinking discipline, etc.)
-- Skills: **20** `SKILL.md` skills under `skills/`, loaded on demand via the native `skill` tool
+- Skills: **21** `SKILL.md` skills under `skills/`, loaded on demand via the native `skill` tool
 - Plugins: `superpowers` (git URL pinned to tag `#v6.3.0`, process skills), `@tarquinen/opencode-dcp` (pinned to `@3.1.15`, intelligent context pruning); both are version-pinned to keep the prefix byte-stable and prevent prefix drift from auto-updates
 
 ## Model Configuration
@@ -86,7 +86,7 @@ This config splits thinking at the `provider` layer: flash disables thinking and
 ### Option 1: Clone + Environment Variable (Recommended, Cross-Platform)
 
 ```bash
-git clone https://github.com/znlgis/my-opencode-deepseek-config.git
+git clone https://github.com/incointo/my-opencode-deepseek-config.git
 ```
 
 Then point `OPENCODE_CONFIG_DIR` at the `opencode/` subdirectory in the repo and you're ready to go.
