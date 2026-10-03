@@ -14,9 +14,13 @@ this file only covers this repository's local conventions.
 | `AGENTS.md` | Global rules auto-loaded into every agent's context |
 | `agents/<name>.md` | One custom agent per file (frontmatter + system prompt) |
 | `skills/<name>/SKILL.md` | On-demand skills, auto-discovered from the config dir |
+| `provider-models.json` | Provider → `main` / `agent` model map, the single place routing is declared |
+| `plugin/provider-bridge.js` | Auto-loaded plugin that retargets `model`, `small_model` and every agent's `model` to the active cc-switch provider |
 
 ## Hard constraints
-- Only `huoshancoding/deepseek-v4.1-flash` and the multimodal `huoshancoding/glm-5.3-flash`. Never a fourth model; glm-5.3-flash is for visual input only, never a default.
+- Never hard-code a model. `plugin/provider-bridge.js` rewrites `model`,
+  `small_model` and every agent's `model` on each start, driven by
+  `provider-models.json`; to change routing, edit that map.
 - Use the singular keys (`plugin`, `snapshot`), not the fork's plural (`plugins`, `snapshots`).
 
 ## Config key shapes (authoritative)
@@ -32,7 +36,7 @@ this file only covers this repository's local conventions.
 | `name` | kebab-case, matches filename |
 | `description` | When to use this agent (drives routing + @-menu) |
 | `mode` | `primary` \| `subagent` |
-| `model` | `huoshancoding/deepseek-v4.1-flash` \| `huoshancoding/glm-5.3-flash` (visual only) |
+| `model` | Leave as the bridge writes it; overwritten at load time from `provider-models.json` |
 | `steps` | step budget; heavier agents get more |
 | `color` | "#RRGGBB" |
 | `hidden` | optional: hide from @-menu |

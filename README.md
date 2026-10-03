@@ -9,20 +9,20 @@
 ## 当前配置概览
 
 - 默认主 Agent：`orchestrator`
-- 主模型与轻量模型：`huoshancoding/deepseek-v4.1-flash`（orchestrator、全部 subagent 及内置工具 agent 共用）；多模态与顶层默认模型：`huoshancoding/glm-5.3-flash`
+- 模型路由：由 `provider-models.json` 声明「供应商 → `main` / `agent` 模型」，`plugin/provider-bridge.js` 在每次启动时自动套用到顶层 `model`、`small_model` 及全部 agent。当前默认供应商 `huoshancoding`：顶层 `glm-5.3-flash`，agent 一律 `deepseek-v4.1-flash`
 - 代理层级：`subagent_depth: 3`（支持 3 级代理嵌套）
 - 会话分享：关闭（`share: "disabled"`）
 - 权限基线：默认放行，破坏性 bash 命令设为 `ask`；`.env` 类敏感文件 `deny`；外部目录 `ask`；只读 Agent 的 bash 白名单（默认 deny 全部 + 仅放行只读子命令）
 - 上下文压缩：内置 compaction（opencode.json）管自动触发 + prune 裁旧工具输出，DCP（dcp.jsonc）管主动去重 + 压缩阈值，两者互补
 - 全局规则：`AGENTS.md`（核心原则、任务拒绝契约、自我验证、反模式、缓存与 thinking 纪律等）
 - 技能：`skills/` 目录下 **21 个** `SKILL.md` 技能，通过原生 `skill` 工具按需加载
-- 插件：`superpowers`（git URL 固定 tag `#v6.3.0`，过程型技能）、`@tarquinen/opencode-dcp`（固定版本 `@3.1.15`，智能上下文裁剪）；两者均固定版本（pin）以保证字节稳定前缀、避免自动更新导致的前缀漂移
+- 插件：`superpowers`（git URL 固定 tag `#v6.3.0`，过程型技能）、`@tarquinen/opencode-dcp`（固定版本 `@3.1.15`，智能上下文裁剪）；两者均固定版本（pin）以保证字节稳定前缀、避免自动更新导致的前缀漂移。另有自研 `plugin/provider-bridge.js`，由 OpenCode 从配置目录自动加载（不写入 `plugin` 数组，因此不受 cc-switch 管理 `plugin` 字段的影响），随供应商切换重写模型路由，无外部依赖
 
 ## 模型配置
 
 ### 前置条件
 
-- OpenCode ≥ v1.18.x（`huoshancoding` provider 已在配置中显式声明，基于 `@ai-sdk/openai-compatible`，无需额外插件）
+- OpenCode ≥ v1.18.x（`huoshancoding` provider 已在配置中显式声明，基于 `@ai-sdk/openai-compatible`；模型路由桥接插件是本地文件、不引入额外依赖）
 - 火山方舟 API Key：在[方舟控制台](https://console.volcengine.com/ark)申请，或开通 [Agent/Coding Plan](https://console.volcengine.com/ark) 订阅套餐
 
 ### 方式一：TUI 交互式配置（推荐）
@@ -137,7 +137,7 @@ ln -s /path/to/my-opencode-deepseek-config/opencode ~/.config/opencode
 ### 验证安装
 
 启动 OpenCode 确认：
-1. `/models` → 当前模型为 `huoshancoding/glm-5.3-flash`（orchestrator 实际运行 `huoshancoding/deepseek-v4.1-flash`）
+1. `/models` → 列出当前供应商的模型；顶层 `model` 与各 agent 的模型由桥接插件按 `provider-models.json` 自动写入，无需手改
 2. Agent 列表应能看到 `orchestrator`、`planner`、`deep-worker` 等 11 个 Agent
 3. 输入任意请求，Orchestrator 自动分析意图并路由
 
@@ -159,17 +159,33 @@ ln -s /path/to/my-opencode-deepseek-config/opencode ~/.config/opencode
 
 ## 模型分工
 
-本仓库严格限制在方舟两模型内分工，不引入其他模型：
+模型不写死在 agent 里，而是由 `provider-models.json` 声明每个供应商用哪两个模型：
 
-| 模型 | 用途 |
-| --- | --- |
-| `huoshancoding/deepseek-v4.1-flash` | 编排/路由、规划、常规与重型实现、深度推理、根因分析、代码审查、咨询、UI、探索、外部检索、轻量编辑、标题/摘要/压缩 |
-| `huoshancoding/glm-5.3-flash` | 多模态：图像/截图/图表/UI 稿的理解与描述（`vision` agent；另为顶层 `model` 默认值） |
+| 角色 | 含义 | `huoshancoding` 取值 |
+| --- | --- | --- |
+| `main` | 顶层 `model`（会话默认模型） | `glm-5.3-flash` |
+| `agent` | 全部 agent：orchestrator、subagent、内置工具 agent | `deepseek-v4.1-flash` |
+
+`plugin/provider-bridge.js` 每次启动读取当前激活的供应商，把这两个角色套用到 `model`、`small_model` 和每个 agent 的 `model`。换供应商不需要改任何 agent 文件。
+
+### 供应商自动切换
+
+在 cc-switch 里新增或启用某个 OpenCode 供应商后，下次启动 OpenCode 即自动跟随。判定激活供应商的优先级：
+
+1. 环境变量 `OC_PROVIDER` —— 显式覆盖，便于调试
+2. cc-switch 库中 `is_current = 1` 的 OpenCode 供应商
+3. cc-switch 日志中最后一条 `OpenCode provider '<id>' written to live config`
+
+> **为什么需要第 3 条**：cc-switch 对 OpenCode 采用「共存模式」（coexist），其源码中 `current()` 对共存模式直接返回空字符串——按设计就没有「当前供应商」概念，官方指引是「在工具内部自己挑模型」。桥接插件因此把「最近一次写入 live 的供应商」作为实际信号。
+
+两处兜底：供应商未在 `provider-models.json` 登记时按模型名推导（优先含 `flash` 者作 `agent`）；路由需要的模型若不在该供应商的 `models` 里会自动补上定义——cc-switch 是整体替换 `provider.<id>` 的，会丢掉模型，这一步可自愈，避免 OpenCode 抛 `ModelNotFoundError`（该错误没有回退）。
+
+改模型只动 `provider-models.json`。可选键：`vision`（给 `vision` agent 指定单独模型）、`agents`（按 agent 名逐个覆盖）。
 
 ### 路由策略
 
 - **Flash 优先**：路由、搜索、规划、常规实现、咨询、UI、探索等明确定义的任务优先走 flash agent
-- **Vision 专责多模态**：检测到图像/截图/图表等视觉输入时，路由到 `vision` agent（GLM-5.3-Flash 多模态模型）
+- **Vision 专责多模态**：检测到图像/截图/图表等视觉输入时路由到 `vision` agent；其模型默认与其它 agent 相同（现代模型普遍支持图像输入），需要单独指定时在 `provider-models.json` 给该供应商加 `vision` 键
 - **重型任务走专职 agent**：深度推理、根因分析、代码审查、重型多文件实现——路由到 `oracle`/`reviewer`/`deep-worker`（同为 flash 模型，但提示词与权限分工更重）
 - **自动升级**：flash agent 无法胜任时自动升级到重型 agent（带完整上下文）
 
@@ -272,7 +288,7 @@ OpenCode 通过原生 `skill` 工具按需暴露技能——Agent 只在需要�
 ## 仓库结构
 
 ```text
-├── opencode/          # OpenCode 配置目录（agents/、skills/、opencode.json、AGENTS.md、dcp.jsonc）
+├── opencode/          # OpenCode 配置目录（agents/、skills/、plugin/、opencode.json、provider-models.json、AGENTS.md、dcp.jsonc）
 ├── scripts/           # sync-config.ps1（发布全局配置到仓库，自动脱敏）+ validate-jsonc.js（JSONC 校验）
 ├── README.md          # 简体中文（默认）
 ├── README.en-US.md    # English

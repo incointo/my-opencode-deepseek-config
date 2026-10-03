@@ -9,20 +9,20 @@
 ## Current Configuration Overview
 
 - Default primary agent: `orchestrator`
-- Primary & lightweight model: `huoshancoding/deepseek-v4.1-flash` (shared by the orchestrator, all subagents, and built-in utility agents); multimodal & top-level default model: `huoshancoding/glm-5.3-flash`
+- Model routing: `provider-models.json` declares "provider → `main` / `agent` model", and `plugin/provider-bridge.js` applies it on every start to the top-level `model`, `small_model` and every agent. Current default provider `huoshancoding`: top-level `glm-5.3-flash`, all agents `deepseek-v4.1-flash`
 - Agent nesting: `subagent_depth: 3` (supports 3 levels of subagent nesting)
 - Session sharing: off (`share: "disabled"`)
 - Permission baseline: allow by default, destructive bash commands set to `ask`; sensitive `.env`-type files `deny`; external directories `ask`; read-only agents get a bash allowlist (deny all by default + allow read-only subcommands only)
 - Context compression: built-in compaction (opencode.json) handles auto-triggering + pruning of stale tool output; DCP (dcp.jsonc) handles proactive dedup + compression thresholds — the two complement each other
 - Global rules: `AGENTS.md` (core principles, task rejection contract, self-verification, anti-patterns, cache & thinking discipline, etc.)
 - Skills: **21** `SKILL.md` skills under `skills/`, loaded on demand via the native `skill` tool
-- Plugins: `superpowers` (git URL pinned to tag `#v6.3.0`, process skills), `@tarquinen/opencode-dcp` (pinned to `@3.1.15`, intelligent context pruning); both are version-pinned to keep the prefix byte-stable and prevent prefix drift from auto-updates
+- Plugins: `superpowers` (git URL pinned to tag `#v6.3.0`, process skills), `@tarquinen/opencode-dcp` (pinned to `@3.1.15`, intelligent context pruning); both are version-pinned to keep the prefix byte-stable and prevent prefix drift from auto-updates. A third, in-repo plugin `plugin/provider-bridge.js` is auto-loaded by OpenCode from the config directory — it is deliberately not listed in the `plugin` array, so cc-switch's management of that field cannot affect it — and it rewrites model routing as the provider changes, with no external dependencies
 
 ## Model Configuration
 
 ### Prerequisites
 
-- OpenCode ≥ v1.18.x (the `huoshancoding` provider is declared explicitly in the config, based on `@ai-sdk/openai-compatible` — no extra plugin needed)
+- OpenCode ≥ v1.18.x (the `huoshancoding` provider is declared explicitly in the config, based on `@ai-sdk/openai-compatible`; the routing bridge is a local file and pulls in no extra dependency)
 - Volcengine Ark API key: request one in the [Ark console](https://console.volcengine.com/ark), or subscribe to an [Agent/Coding Plan](https://console.volcengine.com/ark) plan
 
 ### Option 1: Interactive TUI Setup (Recommended)
@@ -137,7 +137,7 @@ ln -s /path/to/my-opencode-deepseek-config/opencode ~/.config/opencode
 ### Verify the Installation
 
 Launch OpenCode and confirm:
-1. `/models` → the current model is `huoshancoding/glm-5.3-flash` (the orchestrator actually runs `huoshancoding/deepseek-v4.1-flash`)
+1. `/models` → lists the current provider's models; the top-level `model` and every agent's model are written automatically by the bridge plugin from `provider-models.json`
 2. The agent list shows all 11 agents, including `orchestrator`, `planner`, and `deep-worker`
 3. Send any request — the Orchestrator analyzes intent and routes automatically
 
@@ -159,17 +159,33 @@ Review `git diff` after publishing and commit + push manually once no sensitive 
 
 ## Model Division of Labor
 
-This repo strictly divides work among Ark's two models — no other models are introduced:
+Models are not hard-coded into agents. `provider-models.json` declares which two models each provider uses:
 
-| Model | Purpose |
-| --- | --- |
-| `huoshancoding/deepseek-v4.1-flash` | Orchestration/routing, planning, routine and heavy implementation, deep reasoning, root-cause analysis, code review, consultation, UI, exploration, external lookup, light edits, title/summary/compaction |
-| `huoshancoding/glm-5.3-flash` | Multimodal: understanding and describing images, screenshots, charts, and UI mockups (`vision` agent; also the top-level `model` default) |
+| Role | Meaning | `huoshancoding` value |
+| --- | --- | --- |
+| `main` | Top-level `model` (the session default) | `glm-5.3-flash` |
+| `agent` | Every agent: orchestrator, subagents, built-in utility agents | `deepseek-v4.1-flash` |
+
+`plugin/provider-bridge.js` reads the active provider on every start and applies both roles to `model`, `small_model` and each agent's `model`. Switching providers requires no agent-file edits.
+
+### Automatic Provider Switching
+
+After adding or enabling an OpenCode provider in cc-switch, the next OpenCode start follows it automatically. Resolution order for the active provider:
+
+1. `OC_PROVIDER` environment variable — explicit override, useful for debugging
+2. The OpenCode provider with `is_current = 1` in cc-switch's database
+3. The last `OpenCode provider '<id>' written to live config` line in cc-switch's log
+
+> **Why step 3 is needed**: cc-switch treats OpenCode as a *coexist* app. Its `current()` returns an empty string for coexist mode by design — there is no "current provider" concept, and cc-switch's own guidance is to "pick the model inside the tool". The bridge therefore treats "the provider most recently written to live" as the effective signal.
+
+Two fallbacks: a provider missing from `provider-models.json` gets its roles derived from model names (`flash` preferred for `agent`); and any model the routing needs but the provider lacks gets a definition injected — cc-switch replaces `provider.<id>` wholesale and drops models, so this self-heals rather than letting OpenCode raise `ModelNotFoundError` (which has no fallback).
+
+Change models by editing `provider-models.json` only. Optional keys: `vision` (a dedicated model for the `vision` agent) and `agents` (per-agent overrides).
 
 ### Routing Strategy
 
 - **Flash first**: well-defined tasks — routing, search, planning, routine implementation, consultation, UI, exploration — go to flash agents first
-- **Vision owns multimodal**: when visual input (images, screenshots, charts) is detected, route to the `vision` agent (GLM-5.3-Flash multimodal model)
+- **Vision owns multimodal**: when visual input (images, screenshots, charts) is detected, route to the `vision` agent; its model matches the other agents by default (modern models are generally multimodal) — add a `vision` key for that provider in `provider-models.json` when you need to separate it
 - **Heavy tasks go to dedicated agents**: deep reasoning, root-cause analysis, code review, heavy multi-file implementation — route to `oracle`/`reviewer`/`deep-worker` (same flash model, heavier prompts and permissions)
 - **Automatic escalation**: when a flash agent can't handle a task, it escalates to the heavy agent automatically (with full context)
 
@@ -272,7 +288,7 @@ OpenCode exposes skills on demand via the native `skill` tool — agents load th
 ## Repository Structure
 
 ```text
-├── opencode/          # OpenCode config directory (agents/, skills/, opencode.json, AGENTS.md, dcp.jsonc)
+├── opencode/          # OpenCode config directory (agents/, skills/, plugin/, opencode.json, provider-models.json, AGENTS.md, dcp.jsonc)
 ├── scripts/           # sync-config.ps1 (publish global config into repo, auto-redacted) + validate-jsonc.js (JSONC validation)
 ├── README.md          # Simplified Chinese (default)
 ├── README.en-US.md    # English
