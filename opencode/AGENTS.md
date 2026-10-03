@@ -68,16 +68,13 @@ zh-CN Windows system, Chinese; en-US, English. Never force English unless asked.
 
 ## Constraints (this repository)
 
-- **Model routing comes from the provider map, never hard-coded.** The active
-  provider is resolved on every start by `plugin/provider-bridge.js` from
-  `provider-models.json` (provider → `main` / `agent`). To change which model an
-  agent runs on, edit that map — never hard-code a model into an agent file or
-  into `opencode.json`.
+- **No agent pins a model.** Every agent and subagent inherits the model
+  selected in OpenCode, so switching provider is a picker change rather than a
+  config edit. Never add `model:` to `agents/*.md` or `agent.<name>.model` to
+  `opencode.json`; the top-level `model` key is only the bootstrap default for a
+  session that has no selection yet.
 - **No new dependencies** without explicit justification from the user.
 - **Pure-config philosophy.** Prefer prompt/config changes over new tooling.
-  The one sanctioned exception is `plugin/provider-bridge.js`: agent markdown
-  frontmatter is not passed through `{env:...}` substitution, so per-agent model
-  routing cannot be expressed in config alone.
 
 ## Multi-Step Task Discipline
 

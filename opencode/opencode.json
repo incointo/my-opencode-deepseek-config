@@ -1,22 +1,5 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "agent": {
-    "build": {
-      "model": "huoshancoding/deepseek-v4.1-flash"
-    },
-    "compaction": {
-      "model": "huoshancoding/deepseek-v4.1-flash"
-    },
-    "plan": {
-      "model": "huoshancoding/deepseek-v4.1-flash"
-    },
-    "summary": {
-      "model": "huoshancoding/deepseek-v4.1-flash"
-    },
-    "title": {
-      "model": "huoshancoding/deepseek-v4.1-flash"
-    }
-  },
   "autoupdate": "notify",
   "command": {
     "codemap": {
@@ -123,7 +106,7 @@
     "AGENTS.md"
   ],
   "lsp": true,
-  "model": "huoshancoding/glm-5.3-flash",
+  "model": "huoshancoding/deepseek-v4.1-flash",
   "permission": {
     "bash": {
       "*": "allow",
@@ -210,7 +193,6 @@
     }
   },
   "share": "disabled",
-  "small_model": "huoshancoding/deepseek-v4.1-flash",
   "subagent_depth": 3,
   "tool_output": {
     "max_bytes": 20480,

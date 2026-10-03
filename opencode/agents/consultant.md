@@ -2,7 +2,6 @@
 name: consultant
 description: Decision support and brainstorming consultant. Use for open-ended questions, brainstorming, evaluating approaches, best-practice advice, and answering what-should-I-do questions.
 mode: subagent
-model: huoshancoding/deepseek-v4.1-flash
 steps: 30
 color: "#3498DB"
 permission:

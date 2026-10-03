@@ -4,25 +4,25 @@
 
 > **Source notice**: This repository is an adapted fork of [znlgis/my-opencode-deepseek-config](https://github.com/znlgis/my-opencode-deepseek-config). Based on the original v38 release, model access is migrated from the DeepSeek official API to Volcengine Ark (`huoshancoding` provider), and the multimodal model is switched from `deepseek-v4-flash-vision-exp` to `glm-5.3-flash`. The original repo and its author znlgis retain their original copyright (MIT License).
 
-**OpenCode × Volcengine Ark Optimal Config** — a configuration scheme that pushes Volcengine Ark's DeepSeek V4 Flash plus GLM-5.3-Flash (multimodal) two-model combo to its full potential within OpenCode's multi-agent framework. Core philosophy: **token efficiency first — the best development results at the lowest context cost**.
+**OpenCode × Volcengine Ark Optimal Config** — a configuration scheme that pushes Volcengine Ark's models (DeepSeek V4.1 Flash, GLM-5.3-Flash, and others) to their full potential within OpenCode's multi-agent framework, with free switching between providers. Core philosophy: **token efficiency first — the best development results at the lowest context cost**.
 
 ## Current Configuration Overview
 
 - Default primary agent: `orchestrator`
-- Model routing: `provider-models.json` declares "provider → `main` / `agent` model", and `plugin/provider-bridge.js` applies it on every start to the top-level `model`, `small_model` and every agent. Current default provider `huoshancoding`: top-level `glm-5.3-flash`, all agents `deepseek-v4.1-flash`
+- Models: **no agent pins a model.** Every agent and subagent inherits the model selected in OpenCode, so switching provider is one picker change rather than a config edit. The top-level `model` is only the bootstrap default for a session that has no selection yet
 - Agent nesting: `subagent_depth: 3` (supports 3 levels of subagent nesting)
 - Session sharing: off (`share: "disabled"`)
 - Permission baseline: allow by default, destructive bash commands set to `ask`; sensitive `.env`-type files `deny`; external directories `ask`; read-only agents get a bash allowlist (deny all by default + allow read-only subcommands only)
 - Context compression: built-in compaction (opencode.json) handles auto-triggering + pruning of stale tool output; DCP (dcp.jsonc) handles proactive dedup + compression thresholds — the two complement each other
 - Global rules: `AGENTS.md` (core principles, task rejection contract, self-verification, anti-patterns, cache & thinking discipline, etc.)
 - Skills: **21** `SKILL.md` skills under `skills/`, loaded on demand via the native `skill` tool
-- Plugins: `superpowers` (git URL pinned to tag `#v6.3.0`, process skills), `@tarquinen/opencode-dcp` (pinned to `@3.1.15`, intelligent context pruning); both are version-pinned to keep the prefix byte-stable and prevent prefix drift from auto-updates. A third, in-repo plugin `plugin/provider-bridge.js` is auto-loaded by OpenCode from the config directory — it is deliberately not listed in the `plugin` array, so cc-switch's management of that field cannot affect it — and it rewrites model routing as the provider changes, with no external dependencies
+- Plugins: `superpowers` (git URL pinned to tag `#v6.3.0`, process skills), `@tarquinen/opencode-dcp` (pinned to `@3.1.15`, intelligent context pruning); both are version-pinned to keep the prefix byte-stable and prevent prefix drift from auto-updates
 
 ## Model Configuration
 
 ### Prerequisites
 
-- OpenCode ≥ v1.18.x (the `huoshancoding` provider is declared explicitly in the config, based on `@ai-sdk/openai-compatible`; the routing bridge is a local file and pulls in no extra dependency)
+- OpenCode ≥ v1.18.x (the `huoshancoding` provider is declared explicitly in the config, based on `@ai-sdk/openai-compatible` — no extra plugin needed)
 - Volcengine Ark API key: request one in the [Ark console](https://console.volcengine.com/ark), or subscribe to an [Agent/Coding Plan](https://console.volcengine.com/ark) plan
 
 ### Option 1: Interactive TUI Setup (Recommended)
@@ -30,7 +30,7 @@
 ```bash
 opencode
 # In TUI enter: /connect → select Volcengine Ark → paste API Key
-# Then: /models → select glm-5.3-flash (multimodal / top-level default) or deepseek-v4.1-flash
+# Then: /models → select any model from any provider (the orchestrator and every subagent follow)
 ```
 
 The API key is automatically persisted to OpenCode's credential storage.
@@ -49,10 +49,11 @@ Permanent setup: add `ARK_API_KEY` to your system environment variables.
 
 ```jsonc
 {
-  "model": "huoshancoding/glm-5.3-flash",
-  "small_model": "huoshancoding/deepseek-v4.1-flash"
+  "model": "huoshancoding/deepseek-v4.1-flash"
 }
 ```
+
+The top-level `model` is only the bootstrap default. Neither agents nor subagents declare a `model:`, so whatever you select in `/models` is what they run on (see [Model Selection](#model-selection)).
 
 This config splits thinking at the `provider` layer: flash disables thinking and pins `temperature: 0` (fastest, cheapest). The multimodal `glm-5.3-flash` keeps thinking always on and it cannot be disabled (verified: passing `thinking: disabled` returns HTTP 400), so no options are declared for it. Example (flash):
 
@@ -137,7 +138,7 @@ ln -s /path/to/my-opencode-deepseek-config/opencode ~/.config/opencode
 ### Verify the Installation
 
 Launch OpenCode and confirm:
-1. `/models` → lists the current provider's models; the top-level `model` and every agent's model are written automatically by the bridge plugin from `provider-models.json`
+1. `/models` → pick any model from any provider; the orchestrator and every subagent follow that selection with no config edit
 2. The agent list shows all 11 agents, including `orchestrator`, `planner`, and `deep-worker`
 3. Send any request — the Orchestrator analyzes intent and routes automatically
 
@@ -157,35 +158,32 @@ Publishing excludes `node_modules`, `package*.json`, `*.bak`, and `opencode.json
 
 Review `git diff` after publishing and commit + push manually once no sensitive data is present. Never copy the repo's `opencode.json` back into live — it is redacted and would strip the real key, breaking the provider.
 
-## Model Division of Labor
+## Model Selection
 
-Models are not hard-coded into agents. `provider-models.json` declares which two models each provider uses:
+Models are **not hard-coded into agents**. Every agent and subagent inherits the model you select in OpenCode, so **switching provider is one `/models` selection** — no config file is edited.
 
-| Role | Meaning | `huoshancoding` value |
-| --- | --- | --- |
-| `main` | Top-level `model` (the session default) | `glm-5.3-flash` |
-| `agent` | Every agent: orchestrator, subagents, built-in utility agents | `deepseek-v4.1-flash` |
+Why this holds: OpenCode's `Task` tool passes the parent session's model **explicitly** to the child session (`packages/opencode/src/tool/task.ts`):
 
-`plugin/provider-bridge.js` reads the active provider on every start and applies both roles to `model`, `small_model` and each agent's `model`. Switching providers requires no agent-file edits.
+```ts
+const model = next.model ?? { modelID: msg.info.modelID, providerID: msg.info.providerID }
+```
 
-### Automatic Provider Switching
+`next.model` is the agent's own declared `model:`. As long as none is declared, a subagent always follows the parent's selection — which is exactly why no agent in this repo declares one.
 
-After adding or enabling an OpenCode provider in cc-switch, the next OpenCode start follows it automatically. Resolution order for the active provider:
+### Division of labour with cc-switch
 
-1. `OC_PROVIDER` environment variable — explicit override, useful for debugging
-2. The OpenCode provider with `is_current = 1` in cc-switch's database
-3. The last `OpenCode provider '<id>' written to live config` line in cc-switch's log
+cc-switch treats OpenCode as a *coexist* app: it writes only `provider.<id>` into `opencode.json` and **never `model`, `small_model` or `agents/*.md`**; its `current()` returns an empty string for coexist mode by design — there is no "current provider" concept, and its own guidance is to "pick the model inside the tool".
 
-> **Why step 3 is needed**: cc-switch treats OpenCode as a *coexist* app. Its `current()` returns an empty string for coexist mode by design — there is no "current provider" concept, and cc-switch's own guidance is to "pick the model inside the tool". The bridge therefore treats "the provider most recently written to live" as the effective signal.
+So the split is: **cc-switch prepares the provider endpoints, OpenCode decides which one is in use.** After adding or enabling a provider in cc-switch it appears in `/models`; selecting it is all that is needed.
 
-Two fallbacks: a provider missing from `provider-models.json` gets its roles derived from model names (`flash` preferred for `agent`); and any model the routing needs but the provider lacks gets a definition injected — cc-switch replaces `provider.<id>` wholesale and drops models, so this self-heals rather than letting OpenCode raise `ModelNotFoundError` (which has no fallback).
+The top-level `model` is only the bootstrap default for a session with no selection (`Provider.defaultModel()` consults it only when the session has no model). Once you have picked, your selection governs.
 
-Change models by editing `provider-models.json` only. Optional keys: `vision` (a dedicated model for the `vision` agent) and `agents` (per-agent overrides).
+> cc-switch **replaces `provider.<id>` wholesale**, including its model definitions. If a provider's model list is narrowed, OpenCode raises `ModelNotFoundError` (which has no fallback) — restore the model in cc-switch, or pick one that still exists.
 
 ### Routing Strategy
 
 - **Flash first**: well-defined tasks — routing, search, planning, routine implementation, consultation, UI, exploration — go to flash agents first
-- **Vision owns multimodal**: when visual input (images, screenshots, charts) is detected, route to the `vision` agent; its model matches the other agents by default (modern models are generally multimodal) — add a `vision` key for that provider in `provider-models.json` when you need to separate it
+- **Vision owns multimodal**: when visual input (images, screenshots, charts) is detected, route to the `vision` agent; it runs on the same model as every other agent (modern models are generally multimodal), with no separate assignment
 - **Heavy tasks go to dedicated agents**: deep reasoning, root-cause analysis, code review, heavy multi-file implementation — route to `oracle`/`reviewer`/`deep-worker` (same flash model, heavier prompts and permissions)
 - **Automatic escalation**: when a flash agent can't handle a task, it escalates to the heavy agent automatically (with full context)
 
@@ -288,7 +286,7 @@ OpenCode exposes skills on demand via the native `skill` tool — agents load th
 ## Repository Structure
 
 ```text
-├── opencode/          # OpenCode config directory (agents/, skills/, plugin/, opencode.json, provider-models.json, AGENTS.md, dcp.jsonc)
+├── opencode/          # OpenCode config directory (agents/, skills/, opencode.json, AGENTS.md, dcp.jsonc)
 ├── scripts/           # sync-config.ps1 (publish global config into repo, auto-redacted) + validate-jsonc.js (JSONC validation)
 ├── README.md          # Simplified Chinese (default)
 ├── README.en-US.md    # English
@@ -346,7 +344,7 @@ The core ideas draw on [oh-my-openagent](https://github.com/code-yeongyu/oh-my-o
 ## Design Philosophy
 
 - **Pure config-driven, zero extra dependencies** — every capability comes from `opencode.json` + `agents/*.md` + `skills/*/SKILL.md` + `AGENTS.md`
-- **Two-model combo used to its full potential** — Flash handles routing, planning, routine implementation, and the heavy divisions (oracle/reviewer/deep-worker: same model, heavier prompts); GLM-5.3-Flash owns multimodal (the `vision` agent) and serves as the top-level default model
+- **No hard-coded models** — no agent declares a `model:`, so all of them inherit whatever you select in `/models`; changing provider is one selection, with no config file touched
 - **Token efficiency first** — path references instead of pasted files, skills loaded on demand, tiered compression management
 - **Plugins add value without stealing the spotlight** — superpowers provides process discipline, DCP (dcp.jsonc) handles proactive dedup + compression thresholds, built-in compaction (opencode.json) handles auto-trigger + prune fallback; both plugins are version-pinned to keep the prefix byte-stable and prevent prefix drift from auto-updates
 - **Execution separated from exploration** — deep-worker/light-orchestrator must not research or delegate; explore/librarian must not modify

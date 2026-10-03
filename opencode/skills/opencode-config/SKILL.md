@@ -14,13 +14,11 @@ this file only covers this repository's local conventions.
 | `AGENTS.md` | Global rules auto-loaded into every agent's context |
 | `agents/<name>.md` | One custom agent per file (frontmatter + system prompt) |
 | `skills/<name>/SKILL.md` | On-demand skills, auto-discovered from the config dir |
-| `provider-models.json` | Provider → `main` / `agent` model map, the single place routing is declared |
-| `plugin/provider-bridge.js` | Auto-loaded plugin that retargets `model`, `small_model` and every agent's `model` to the active cc-switch provider |
 
 ## Hard constraints
-- Never hard-code a model. `plugin/provider-bridge.js` rewrites `model`,
-  `small_model` and every agent's `model` on each start, driven by
-  `provider-models.json`; to change routing, edit that map.
+- Never pin a model. Agents and subagents inherit the model selected in OpenCode,
+  so adding `model:` to an agent (or `agent.<name>.model` to `opencode.json`)
+  overrides that pick and reintroduces hand-editing on every provider switch.
 - Use the singular keys (`plugin`, `snapshot`), not the fork's plural (`plugins`, `snapshots`).
 
 ## Config key shapes (authoritative)
@@ -36,7 +34,7 @@ this file only covers this repository's local conventions.
 | `name` | kebab-case, matches filename |
 | `description` | When to use this agent (drives routing + @-menu) |
 | `mode` | `primary` \| `subagent` |
-| `model` | Leave as the bridge writes it; overwritten at load time from `provider-models.json` |
+| `model` | Omit — agents inherit the model selected in OpenCode |
 | `steps` | step budget; heavier agents get more |
 | `color` | "#RRGGBB" |
 | `hidden` | optional: hide from @-menu |

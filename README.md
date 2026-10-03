@@ -4,25 +4,25 @@
 
 > **来源声明**：本仓库是 [znlgis/my-opencode-deepseek-config](https://github.com/znlgis/my-opencode-deepseek-config) 的改编分支（fork）。基于原作者 v38 版本，将模型接入从 DeepSeek 官方 API 迁移至火山方舟（Volcengine Ark，`huoshancoding` provider），多模态模型由 `deepseek-v4-flash-vision-exp` 替换为 `glm-5.3-flash`。原仓库与原作者 znlgis 保留其原始版权（MIT License）。
 
-**OpenCode × 火山方舟最优配置** —— 在 OpenCode 多 Agent 框架下，将方舟 DeepSeek V4 Flash 与 GLM-5.3-Flash（多模态）双模型的能力发挥到极致的配置方案。核心理念：**Token 效率优先，用最小的上下文成本达到最好的开发效果**。
+**OpenCode × 火山方舟最优配置** —— 在 OpenCode 多 Agent 框架下把方舟模型（DeepSeek V4.1 Flash、GLM-5.3-Flash 等）的能力发挥到极致的配置方案，并支持在多个供应商之间自由切换。核心理念：**Token 效率优先，用最小的上下文成本达到最好的开发效果**。
 
 ## 当前配置概览
 
 - 默认主 Agent：`orchestrator`
-- 模型路由：由 `provider-models.json` 声明「供应商 → `main` / `agent` 模型」，`plugin/provider-bridge.js` 在每次启动时自动套用到顶层 `model`、`small_model` 及全部 agent。当前默认供应商 `huoshancoding`：顶层 `glm-5.3-flash`，agent 一律 `deepseek-v4.1-flash`
+- 模型：agent 与子代理**一律不固定模型**，全部继承你在 OpenCode 里选中的模型——换供应商只是换一次选择，不需要改任何配置文件。顶层 `model` 仅作为"尚未选择过"时的启动默认值
 - 代理层级：`subagent_depth: 3`（支持 3 级代理嵌套）
 - 会话分享：关闭（`share: "disabled"`）
 - 权限基线：默认放行，破坏性 bash 命令设为 `ask`；`.env` 类敏感文件 `deny`；外部目录 `ask`；只读 Agent 的 bash 白名单（默认 deny 全部 + 仅放行只读子命令）
 - 上下文压缩：内置 compaction（opencode.json）管自动触发 + prune 裁旧工具输出，DCP（dcp.jsonc）管主动去重 + 压缩阈值，两者互补
 - 全局规则：`AGENTS.md`（核心原则、任务拒绝契约、自我验证、反模式、缓存与 thinking 纪律等）
 - 技能：`skills/` 目录下 **21 个** `SKILL.md` 技能，通过原生 `skill` 工具按需加载
-- 插件：`superpowers`（git URL 固定 tag `#v6.3.0`，过程型技能）、`@tarquinen/opencode-dcp`（固定版本 `@3.1.15`，智能上下文裁剪）；两者均固定版本（pin）以保证字节稳定前缀、避免自动更新导致的前缀漂移。另有自研 `plugin/provider-bridge.js`，由 OpenCode 从配置目录自动加载（不写入 `plugin` 数组，因此不受 cc-switch 管理 `plugin` 字段的影响），随供应商切换重写模型路由，无外部依赖
+- 插件：`superpowers`（git URL 固定 tag `#v6.3.0`，过程型技能）、`@tarquinen/opencode-dcp`（固定版本 `@3.1.15`，智能上下文裁剪）；两者均固定版本（pin）以保证字节稳定前缀、避免自动更新导致的前缀漂移
 
 ## 模型配置
 
 ### 前置条件
 
-- OpenCode ≥ v1.18.x（`huoshancoding` provider 已在配置中显式声明，基于 `@ai-sdk/openai-compatible`；模型路由桥接插件是本地文件、不引入额外依赖）
+- OpenCode ≥ v1.18.x（`huoshancoding` provider 已在配置中显式声明，基于 `@ai-sdk/openai-compatible`，无需额外插件）
 - 火山方舟 API Key：在[方舟控制台](https://console.volcengine.com/ark)申请，或开通 [Agent/Coding Plan](https://console.volcengine.com/ark) 订阅套餐
 
 ### 方式一：TUI 交互式配置（推荐）
@@ -30,7 +30,7 @@
 ```bash
 opencode
 # 在 TUI 中输入: /connect → 选择 Volcengine Ark → 粘贴 API Key
-# 然后: /models → 选择 glm-5.3-flash（多模态/顶层默认）或 deepseek-v4.1-flash
+# 然后: /models → 选择任意供应商的任意模型（orchestrator 与全部子代理都会跟随）
 ```
 
 API Key 会自动持久化到 OpenCode 凭据存储。
@@ -49,10 +49,11 @@ opencode
 
 ```jsonc
 {
-  "model": "huoshancoding/glm-5.3-flash",
-  "small_model": "huoshancoding/deepseek-v4.1-flash"
+  "model": "huoshancoding/deepseek-v4.1-flash"
 }
 ```
+
+顶层 `model` 只是启动默认值。agent 与子代理都不写 `model:`，因此你在 `/models` 里选什么，它们就用什么（详见[模型选择](#模型选择)）。
 
 本配置在 `provider` 层拆分 thinking：flash 关闭 thinking 并固定 `temperature: 0`（最快最省）。多模态 `glm-5.3-flash` 的 thinking 常开且无法关闭（实测传 `thinking: disabled` 返回 HTTP 400），因此不在 options 中声明任何参数。示例（flash）：
 
@@ -137,7 +138,7 @@ ln -s /path/to/my-opencode-deepseek-config/opencode ~/.config/opencode
 ### 验证安装
 
 启动 OpenCode 确认：
-1. `/models` → 列出当前供应商的模型；顶层 `model` 与各 agent 的模型由桥接插件按 `provider-models.json` 自动写入，无需手改
+1. `/models` → 选中任意供应商的任意模型；orchestrator 与全部子代理都会跟随该选择，无需改配置
 2. Agent 列表应能看到 `orchestrator`、`planner`、`deep-worker` 等 11 个 Agent
 3. 输入任意请求，Orchestrator 自动分析意图并路由
 
@@ -157,35 +158,32 @@ ln -s /path/to/my-opencode-deepseek-config/opencode ~/.config/opencode
 
 发布后检查 `git diff`，确认无敏感信息再手动 commit + push。切勿把仓库的 `opencode.json` 拷回 live——仓库版本已脱敏，会抹掉真实 key 导致 provider 无法解析。
 
-## 模型分工
+## 模型选择
 
-模型不写死在 agent 里，而是由 `provider-models.json` 声明每个供应商用哪两个模型：
+模型**不写死在 agent 里**。每个 agent 与子代理都继承你在 OpenCode 里选中的模型，所以**换供应商 = 在 `/models` 里换一次选择**，不需要改任何配置文件。
 
-| 角色 | 含义 | `huoshancoding` 取值 |
-| --- | --- | --- |
-| `main` | 顶层 `model`（会话默认模型） | `glm-5.3-flash` |
-| `agent` | 全部 agent：orchestrator、subagent、内置工具 agent | `deepseek-v4.1-flash` |
+依据：OpenCode 的 `Task` 工具会把父会话正在跑的模型**显式**传给子会话（`packages/opencode/src/tool/task.ts`）：
 
-`plugin/provider-bridge.js` 每次启动读取当前激活的供应商，把这两个角色套用到 `model`、`small_model` 和每个 agent 的 `model`。换供应商不需要改任何 agent 文件。
+```ts
+const model = next.model ?? { modelID: msg.info.modelID, providerID: msg.info.providerID }
+```
 
-### 供应商自动切换
+`next.model` 就是 agent 自己声明的 `model:`。只要不声明，子代理就一定跟随父会话的选择——这正是本仓库所有 agent 都不写 `model:` 的原因。
 
-在 cc-switch 里新增或启用某个 OpenCode 供应商后，下次启动 OpenCode 即自动跟随。判定激活供应商的优先级：
+### 与 cc-switch 的分工
 
-1. 环境变量 `OC_PROVIDER` —— 显式覆盖，便于调试
-2. cc-switch 库中 `is_current = 1` 的 OpenCode 供应商
-3. cc-switch 日志中最后一条 `OpenCode provider '<id>' written to live config`
+cc-switch 对 OpenCode 采用「共存模式」（coexist）：它只把供应商写进 `opencode.json` 的 `provider.<id>`，**从不写 `model` / `small_model` / `agents/*.md`**；源码中 `current()` 对共存模式直接返回空字符串——按设计它就没有「当前供应商」概念，官方指引也是「在工具内部自己挑模型」。
 
-> **为什么需要第 3 条**：cc-switch 对 OpenCode 采用「共存模式」（coexist），其源码中 `current()` 对共存模式直接返回空字符串——按设计就没有「当前供应商」概念，官方指引是「在工具内部自己挑模型」。桥接插件因此把「最近一次写入 live 的供应商」作为实际信号。
+分工因此是：**cc-switch 准备供应商端点，OpenCode 决定用哪一个。** 在 cc-switch 里新增或启用供应商后，它会出现在 `/models` 列表，选中即生效。
 
-两处兜底：供应商未在 `provider-models.json` 登记时按模型名推导（优先含 `flash` 者作 `agent`）；路由需要的模型若不在该供应商的 `models` 里会自动补上定义——cc-switch 是整体替换 `provider.<id>` 的，会丢掉模型，这一步可自愈，避免 OpenCode 抛 `ModelNotFoundError`（该错误没有回退）。
+顶层 `model` 只是"尚未选择过"时的启动默认值（仅当会话没有模型时 `Provider.defaultModel()` 才会用到）；选过之后一切以你的选择为准。
 
-改模型只动 `provider-models.json`。可选键：`vision`（给 `vision` agent 指定单独模型）、`agents`（按 agent 名逐个覆盖）。
+> cc-switch 是**整体替换** `provider.<id>` 的，会连模型定义一起覆盖。若某供应商的模型列表被改窄，OpenCode 会直接抛 `ModelNotFoundError`（该错误没有回退）——在 cc-switch 里把模型补回，或改选一个已存在的模型即可。
 
 ### 路由策略
 
 - **Flash 优先**：路由、搜索、规划、常规实现、咨询、UI、探索等明确定义的任务优先走 flash agent
-- **Vision 专责多模态**：检测到图像/截图/图表等视觉输入时路由到 `vision` agent；其模型默认与其它 agent 相同（现代模型普遍支持图像输入），需要单独指定时在 `provider-models.json` 给该供应商加 `vision` 键
+- **Vision 专责多模态**：检测到图像/截图/图表等视觉输入时路由到 `vision` agent；它与其它 agent 用同一个模型（现代模型普遍支持图像输入），不做单独指定
 - **重型任务走专职 agent**：深度推理、根因分析、代码审查、重型多文件实现——路由到 `oracle`/`reviewer`/`deep-worker`（同为 flash 模型，但提示词与权限分工更重）
 - **自动升级**：flash agent 无法胜任时自动升级到重型 agent（带完整上下文）
 
@@ -288,7 +286,7 @@ OpenCode 通过原生 `skill` 工具按需暴露技能——Agent 只在需要�
 ## 仓库结构
 
 ```text
-├── opencode/          # OpenCode 配置目录（agents/、skills/、plugin/、opencode.json、provider-models.json、AGENTS.md、dcp.jsonc）
+├── opencode/          # OpenCode 配置目录（agents/、skills/、opencode.json、AGENTS.md、dcp.jsonc）
 ├── scripts/           # sync-config.ps1（发布全局配置到仓库，自动脱敏）+ validate-jsonc.js（JSONC 校验）
 ├── README.md          # 简体中文（默认）
 ├── README.en-US.md    # English
@@ -346,7 +344,7 @@ OpenCode 通过原生 `skill` 工具按需暴露技能——Agent 只在需要�
 ## 设计哲学
 
 - **纯配置驱动，零额外依赖** —— 所有能力由 `opencode.json` + `agents/*.md` + `skills/*/SKILL.md` + `AGENTS.md` 实现
-- **双模型极致利用** —— Flash 做路由、规划、常规实现与重型分工（oracle/reviewer/deep-worker 同模型不同提示词），GLM-5.3-Flash 专责多模态（`vision` agent），并作为顶层默认模型
+- **模型不写死** —— 所有 agent 都不声明 `model:`，一律继承你在 `/models` 里选中的模型；换供应商只需换一次选择，不动任何配置文件
 - **Token 效率优先** —— 路径引用替代粘贴文件、技能按需加载、压缩分级管理
 - **插件增效但不喧宾夺主** —— superpowers 提供过程纪律，DCP（dcp.jsonc）主动去重+压缩阈值，内置 compaction（opencode.json）自动触发+prune 兜底；两插件均固定版本（pin）以保字节稳定前缀，避免自动更新导致前缀漂移
 - **执行与探索分离** —— deep-worker/light-orchestrator 禁止研究/委托，explore/librarian 禁止修改

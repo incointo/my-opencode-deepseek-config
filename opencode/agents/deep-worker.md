@@ -2,7 +2,6 @@
 name: deep-worker
 description: Heavy-lift implementer. Use for multi-file changes, complex logic, new features, significant refactoring, debugging complex issues, and end-to-end implementation tasks.
 mode: subagent
-model: huoshancoding/deepseek-v4.1-flash
 steps: 100
 color: "#E24A4A"
 permission:

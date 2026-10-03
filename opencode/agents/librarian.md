@@ -2,7 +2,6 @@
 name: librarian
 description: External research specialist. Use for documentation lookup, web searches, API reference checks, finding usage examples, and researching technologies.
 mode: subagent
-model: huoshancoding/deepseek-v4.1-flash
 steps: 30
 color: "#8E44AD"
 hidden: true
